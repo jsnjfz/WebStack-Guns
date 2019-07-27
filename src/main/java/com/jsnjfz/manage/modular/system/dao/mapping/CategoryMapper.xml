@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jsnjfz.manage.modular.system.dao.CategoryMapper">
+
+    <select id="selectByPrimaryKey" resultType="com.jsnjfz.manage.modular.system.model.Category" parameterType="java.lang.Integer">
+        select
+        id,title,sort,icon,create_time createTime,parent_id parentId,levels
+        from category
+        where id = #{id}
+    </select>
+
+    <select id="getParentTitleById" resultType="com.jsnjfz.manage.modular.system.model.Category" parameterType="java.lang.Integer">
+        select title
+        from category
+        where id = (select parent_id from category where id = #{id})
+    </select>
+
+    <select id="getCatogry" resultType="map" parameterType="map">
+        select
+        id,title,sort,icon,create_time createTime,parent_id parentId,levels
+        from category
+        where 1=1
+        <if test="title != null and title != ''">
+            and title like CONCAT('%',#{title},'%')
+        </if>
+    </select>
+
+    <select id="getList" resultType="com.jsnjfz.manage.modular.system.model.Category" parameterType="map">
+        select
+        id,title,sort,icon,create_time createTime,parent_id parentId,levels
+        from category
+        order by sort
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+		delete from category where id = #{id}
+	</delete>
+
+    <insert id="insertSelective" parameterType="com.jsnjfz.manage.modular.system.model.Category" useGeneratedKeys="true"
+            keyProperty="id">
+        insert into category
+        <set>
+            <if test="parentId != null">parent_id=#{parentId},</if>
+            <if test="sort != null">sort=#{sort},</if>
+            <if test="title != null">title=#{title},</if>
+            <if test="icon != null">icon=#{icon},</if>
+            <if test="levels != null">levels=#{levels},</if>
+            create_time=now()
+        </set>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.jsnjfz.manage.modular.system.model.Category">
+        update category
+        <set>
+            <if test="parentId != null">parent_id=#{parentId},</if>
+            <if test="sort != null">sort=#{sort},</if>
+            <if test="title != null">title=#{title},</if>
+            <if test="icon != null">icon=#{icon},</if>
+            <if test="levels != null">levels=#{levels},</if>
+            update_time=now()
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="tree" resultType="com.jsnjfz.manage.core.common.node.ZTreeNode">
+        select id,parent_id as pId,title as name,
+               (
+                   CASE
+                       WHEN (parent_id = 0 OR parent_id IS NULL) THEN
+                           'true'
+                       ELSE
+                           'false'
+                       END
+                   ) as isOpen from category
+    </select>
+
+    <select id="getCatogryNode" resultType="com.jsnjfz.manage.core.common.node.MenuNode" parameterType="map">
+        select
+        id,title name,sort num,icon,create_time createTime,parent_id parentId,levels,1 ismenu
+        from category
+        order by sort
+    </select>
+
+
+</mapper>

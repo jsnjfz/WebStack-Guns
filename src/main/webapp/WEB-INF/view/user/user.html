@@ -1,0 +1,51 @@
+@layout("/common/_container.html"){
+<div class="row">
+    <div class="col-sm-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h5>管理</h5>
+            </div>
+            <div class="ibox-content">
+                <div class="row row-lg">
+                    <div class="col-sm-12">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <#NameCon id="nickname" name="用户昵称" />
+                            </div>
+                            <div class="col-sm-2">
+                                <#NameCon id="phone" name="手机号" />
+                            </div>
+                            <div class="col-sm-2">
+                                <#SelectCon id="language" name="用户级别" >
+                                <option value="">全部</option>
+                                <option value="1">普通用户</option>
+                                <option value="2">vip用户</option>
+                                <option value="3">付费用户</option>
+                                </#SelectCon>
+                            </div>
+                            <div class="col-sm-2">
+                                <#SelectCon id="payStatus" name="是否购买" >
+                                <option value="">全部</option>
+                                <option value="1">是</option>
+                                <option value="0">否</option>
+                            </#SelectCon>
+                            </div>
+                            <div class="col-sm-2">
+                                <#NameCon id="userId" name="用户id" />
+                            </div>
+                            <div class="col-sm-2">
+                                <#button name="搜索" icon="fa-search" clickFun="User.search()"/>
+                            </div>
+                        </div>
+                        <div class="hidden-xs" id="UserTableToolbar" role="group">
+                            <#button name="购买详情" icon="fa-shopping-cart" clickFun="User.detail()"/>
+                        </div>
+                        <#table id="UserTable"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="${ctxPath}/static/modular/user/user.js"></script>
+@}

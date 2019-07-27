@@ -1,0 +1,25 @@
+@for(categorySite in categorySiteList){
+    @if(isNotEmpty(categorySite.sites)){
+    <h4 class="text-gray"><i class="linecons-tag" style="margin-right: 7px;" id="${categorySite.title}"></i>${categorySite.title}</h4>
+        <div class="row">
+            @for(site in categorySite.sites){
+            <div class="col-sm-3">
+                <div class="xe-widget xe-conversations box2 label-info" onclick="window.open('${site.url}', '_blank')" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="${site.url}">
+                    <div class="xe-comment-entry">
+                        <a class="xe-user-img">
+                            <img src="/kaptcha/${site.thumb}" class="img-circle" width="40">
+                        </a>
+                        <div class="xe-comment">
+                            <a href="#" class="xe-user-name overflowClip_1">
+                                <strong>${site.title}</strong>
+                            </a>
+                            <p class="overflowClip_2">${site.description}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @}
+        </div>
+    <br>
+    @}
+@}

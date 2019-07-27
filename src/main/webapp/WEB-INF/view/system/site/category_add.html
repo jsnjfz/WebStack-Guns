@@ -1,0 +1,43 @@
+@layout("/common/_container.html"){
+<div class="ibox float-e-margins">
+    <div class="ibox-content">
+        <div class="form-horizontal" id="categoryForm">
+
+            <input type="hidden" id="id" value="">
+
+            <div class="row">
+                <div class="col-sm-6 b-r">
+                    <#input id="title" name="标题" underline="true" />
+
+                    <#input id="icon" name="图标" underline="true" />
+                </div>
+                <div class="col-sm-6 b-r">
+                    <#input id="pName" name="父级" readonly="readonly" hidden="parentId"
+                    clickFun="CategoryDlg.showCategorySelectTree(); return false;"
+                    style="background-color: #ffffff !important;" underline="true"/>
+
+                    <#input id="sort" name="排序" underline="true" />
+                </div>
+            </div>
+
+            <!-- 分类的选择框 -->
+            <div id="parentCategoryMenu" class="menuContent"
+                 style="display: none; position: absolute; z-index: 200;">
+                <ul id="parentCategoryMenuTree" class="ztree tree-box" style="width: 245px !important;"></ul>
+            </div>
+
+            <div class="row btn-group-m-t">
+                <div class="col-sm-10">
+                    <#button btnCss="info" name="提交" id="ensure" icon="fa-check" clickFun="CategoryDlg.addSubmit()"/>
+                    <#button btnCss="danger" name="取消" id="cancel" icon="fa-eraser" clickFun="CategoryDlg.close()"/>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="${ctxPath}/static/modular/system/site/category_info.js"></script>
+<script>
+    $("#icon").iconpicker({placement:'bottomLeft'});
+</script>
+@}

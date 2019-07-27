@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jsnjfz.manage.modular.system.dao.SiteMapper">
+
+    <select id="selectByPrimaryKey" resultType="com.jsnjfz.manage.modular.system.model.Site" parameterType="java.lang.Integer">
+        select s.*,c.title categoryTitle
+        from site s left join category c on s.category_id = c.id
+        where s.id = #{id}
+    </select>
+
+
+    <select id="getList" resultType="com.jsnjfz.manage.modular.system.model.Site" parameterType="map">
+        select s.*,c.title categoryTitle
+        from site s left join category c on s.category_id = c.id
+        where 1=1
+        <if test="title != null and title != ''">
+            and s.title like CONCAT('%',#{title},'%')
+        </if>
+        <if test="offset != null">LIMIT #{offset},#{size}</if>
+    </select>
+
+    <select id="getTotalCount" resultType="java.lang.Integer" parameterType="map">
+        select count(1)
+        from site
+        where 1=1
+        <if test="title != null and title != ''">
+            and title like CONCAT('%',#{title},'%')
+        </if>
+    </select>
+
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+		delete from site where id = #{id}
+	</delete>
+
+
+    <insert id="insertSelective" parameterType="com.jsnjfz.manage.modular.system.model.Site" useGeneratedKeys="true"
+            keyProperty="id">
+        insert into site
+        <set>
+            <if test="categoryId != null">category_id=#{categoryId},</if>
+            <if test="title != null">title=#{title},</if>
+            <if test="thumb != null">thumb=#{thumb},</if>
+            <if test="description != null">description=#{description},</if>
+            <if test="url != null">url=#{url},</if>
+            create_time=now()
+        </set>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.jsnjfz.manage.modular.system.model.Site">
+        update site
+        <set>
+            <if test="categoryId != null">category_id=#{categoryId},</if>
+            <if test="title != null">title=#{title},</if>
+            <if test="thumb != null">thumb=#{thumb},</if>
+            <if test="description != null">description=#{description},</if>
+            <if test="url != null">url=#{url},</if>
+            update_time=now()
+        </set>
+        where id = #{id}
+    </update>
+
+
+</mapper>

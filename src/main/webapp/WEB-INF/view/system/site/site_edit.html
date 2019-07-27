@@ -1,0 +1,42 @@
+@layout("/common/_container.html"){
+<div class="ibox float-e-margins">
+    <div class="ibox-content">
+        <div class="form-horizontal" id="siteForm">
+
+            <input type="hidden" id="id" value="${site.id}">
+
+            <div class="row">
+
+                <div class="col-sm-12 b-r">
+                    <#input id="categoryTitle" name="分类" readonly="readonly" hidden="categoryId" value="${site.categoryTitle}"
+                    clickFun="SiteDlg.showCategorySelectTree(); return false;"
+                    style="background-color: #ffffff !important;" underline="true"/>
+
+                    <#input id="title" name="标题" underline="true" value="${site.title}"/>
+
+                    <#image id="thumb" name="图标" underline="true" avatarImg="${site.thumb}"/>
+
+                    <#input id="description" name="描述" underline="true" value="${site.description}"/>
+
+                    <#input id="url" name="地址" underline="true" value="${site.url}"/>
+                </div>
+            </div>
+
+            <!-- 分类的选择框 -->
+            <div id="parentCategoryMenu" class="menuContent"
+                 style="display: none; position: absolute; z-index: 200;">
+                <ul id="parentCategoryMenuTree" class="ztree tree-box" style="width: 245px !important;"></ul>
+            </div>
+
+            <div class="row btn-group-m-t">
+                <div class="col-sm-10">
+                    <#button btnCss="info" name="提交" id="ensure" icon="fa-check" clickFun="SiteDlg.editSubmit()"/>
+                    <#button btnCss="danger" name="取消" id="cancel" icon="fa-eraser" clickFun="SiteDlg.close()"/>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="${ctxPath}/static/modular/system/site/site_info.js"></script>
+@}
