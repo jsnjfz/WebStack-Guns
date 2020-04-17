@@ -37,7 +37,7 @@ password
 ...
 ```
 
-新建数据库(utf8mb4)，导入数据：
+新建数据库guns(utf8mb4)，导入数据：
 
 ```shell
 guns.sql
