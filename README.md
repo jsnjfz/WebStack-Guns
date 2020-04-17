@@ -61,7 +61,7 @@ $ java -jar Webstack-Guns-1.0.jar
 
 默认密码：111111
 
-在线demo: http://117.78.18.7:8000/
+在线demo: http://121.37.176.129:8000/
 
 ![主页](screen/2.png)
 
