@@ -78,15 +78,17 @@ public class UserAuthServiceServiceImpl implements UserAuthService {
         shiroUser.setDeptName(ConstantFactory.me().getDeptName(user.getDeptid()));
         shiroUser.setName(user.getName());
 
-        Integer[] roleArray = Convert.toIntArray(user.getRoleid());
-        List<Integer> roleList = new ArrayList<Integer>();
-        List<String> roleNameList = new ArrayList<String>();
-        for (int roleId : roleArray) {
-            roleList.add(roleId);
-            roleNameList.add(ConstantFactory.me().getSingleRoleName(roleId));
+        if (user.getRoleid() != null){
+            Integer[] roleArray = Convert.toIntArray(user.getRoleid());
+            List<Integer> roleList = new ArrayList<Integer>();
+            List<String> roleNameList = new ArrayList<String>();
+            for (int roleId : roleArray) {
+                roleList.add(roleId);
+                roleNameList.add(ConstantFactory.me().getSingleRoleName(roleId));
+            }
+            shiroUser.setRoleList(roleList);
+            shiroUser.setRoleNames(roleNameList);
         }
-        shiroUser.setRoleList(roleList);
-        shiroUser.setRoleNames(roleNameList);
 
         return shiroUser;
     }
