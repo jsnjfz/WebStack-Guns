@@ -23,7 +23,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
 <<<<<<< HEAD
-        <shiro.version>1.7.1</shiro.version>
+        <shiro.version>1.10.0</shiro.version>
 =======
         <shiro.version>1.10.0</shiro.version>
 >>>>>>> origin/dependabot/maven/org.apache.shiro-shiro-core-1.10.0
