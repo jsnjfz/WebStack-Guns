@@ -25,7 +25,7 @@
         <shiro.version>1.10.0</shiro.version>
         <kaptcha.version>2.3.2</kaptcha.version>
         <ehcache.version>3.3.1</ehcache.version>
-        <beetl.version>2.9.3</beetl.version>
+        <beetl.version>3.15.4.RELEASE</beetl.version>
         <swagger.version>2.9.2</swagger.version>
         <ehcache.core.version>2.6.11</ehcache.core.version>
         <mysql-connector-java.version>8.0.28</mysql-connector-java.version>
