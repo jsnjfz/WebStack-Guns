@@ -28,9 +28,13 @@
 
     <select id="getList" resultType="com.jsnjfz.manage.modular.system.model.Category" parameterType="map">
         select
-        id,title,sort,icon,create_time createTime,parent_id parentId,levels
-        from category
-        order by sort
+        c.id,c.title,c.sort,c.icon,c.create_time createTime,c.parent_id parentId,c.levels
+        from category c left join user_category_relation ur on c.id = ur.category_id
+        where 1=1
+        <if test="userId != null and userId != ''">
+            and ur.user_id = #{userId}
+        </if>
+        order by c.sort
     </select>
 
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
@@ -76,10 +80,23 @@
     </select>
 
     <select id="getCatogryNode" resultType="com.jsnjfz.manage.core.common.node.MenuNode" parameterType="map">
-        select
-        id,title name,sort num,icon,create_time createTime,parent_id parentId,levels,1 ismenu
-        from category
-        order by sort
+        SELECT
+        c.id,
+        c.title NAME,
+        c.sort num,
+        c.icon,
+        c.create_time createTime,
+        c.parent_id parentId,
+        c.levels,
+            1 ismenu
+        FROM
+            category c LEFT JOIN user_category_relation ur on c.id = ur.category_id
+        where 1=1
+        <if test="userId != null and userId != ''">
+            and ur.user_id = #{userId}
+        </if>
+        ORDER BY
+            sort
     </select>
 
 
