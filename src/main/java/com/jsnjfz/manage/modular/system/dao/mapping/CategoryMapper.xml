@@ -19,8 +19,11 @@
     <select id="getCatogry" resultType="map" parameterType="map">
         select
         id,title,sort,icon,create_time createTime,parent_id parentId,levels
-        from category
+        from category left join user_category_relation ur on c.id = ur.category_id
         where 1=1
+          <if test="userId != null and userId != ''">
+              and ur.user_id = #{userId}
+          </if>
         <if test="title != null and title != ''">
             and title like CONCAT('%',#{title},'%')
         </if>
