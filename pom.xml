@@ -29,7 +29,7 @@
         <swagger.version>2.9.2</swagger.version>
         <ehcache.core.version>2.6.11</ehcache.core.version>
         <mysql-connector-java.version>8.0.28</mysql-connector-java.version>
-        <jwt.version>0.9.0</jwt.version>
+        <jwt.version>0.12.6</jwt.version>
     </properties>
 
     <dependencies>
