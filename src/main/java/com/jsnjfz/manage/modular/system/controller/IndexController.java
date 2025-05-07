@@ -17,6 +17,8 @@ package com.jsnjfz.manage.modular.system.controller;
 
 import cn.stylefeng.roses.core.base.controller.BaseController;
 import com.jsnjfz.manage.core.common.node.MenuNode;
+import com.jsnjfz.manage.core.shiro.ShiroKit;
+import com.jsnjfz.manage.core.shiro.ShiroUser;
 import com.jsnjfz.manage.modular.system.model.Category;
 import com.jsnjfz.manage.modular.system.service.IOperationLogService;
 import com.jsnjfz.manage.modular.system.service.impl.CategoryServiceImpl;
@@ -27,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 
 /**
@@ -45,9 +49,14 @@ public class IndexController extends BaseController {
      */
     @RequestMapping("/")
     public String index(Model model) {
-        List<MenuNode> menus = categoryService.getCatogryNode(new HashMap<>());
+        ShiroUser shiroUser = ShiroKit.getUser();
+        Map<String, Object> params = new HashMap<>();
+        if (Objects.nonNull(shiroUser)){
+            params.put("userId", shiroUser.getId());
+        }
+        List<MenuNode> menus = categoryService.getCatogryNode(params);
         List<MenuNode> titles = MenuNode.buildTitle(menus);
-        List<Category> categorySiteList = categoryService.getCatogrySite(null);
+        List<Category> categorySiteList = categoryService.getCatogrySite(params);
         model.addAttribute("categorySiteList", categorySiteList);
         model.addAttribute("titles", titles);
         System.out.println(titles);
