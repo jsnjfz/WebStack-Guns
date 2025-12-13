@@ -71,6 +71,8 @@ $ java -jar Webstack-Guns-1.0.jar
 
 
 
+
+
 ## 感谢
 
 前端设计：[**WebStackPage**](https://github.com/WebStackPage/WebStackPage.github.io)
@@ -80,6 +82,8 @@ $ java -jar Webstack-Guns-1.0.jar
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**SpringBoot**
 
 
+## 声明
+如果在外网使用一定要升级shiro版本到最新，防止安全漏洞，因框架漏洞产生的服务器被攻击或渗透本人概不负责
 
 ## License
 
