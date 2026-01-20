@@ -12,10 +12,7 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @Author jsnjfz
@@ -48,12 +45,12 @@ public class CategoryServiceImpl extends BaseService<Category> {
 
 
     public List<Category> getCatogrySite(Map<String, Object> map) {
-        List<Category> categoryList = categoryMapper.getList(null);
-        List<Site> siteList = siteMapper.getList(null);
+        List<Category> categoryList = categoryMapper.getList(map);
+        List<Site> siteList = siteMapper.getList(map);
         for (Category category:categoryList) {
             List<Site> sites = new ArrayList<>();
             for (Site site:siteList){
-                if (site.getCategoryId() == category.getId()){
+                if (Objects.equals(site.getCategoryId(), category.getId())){
                     sites.add(site);
                 }
 

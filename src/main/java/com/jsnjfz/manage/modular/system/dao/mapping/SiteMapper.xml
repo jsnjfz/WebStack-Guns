@@ -13,7 +13,11 @@
     <select id="getList" resultType="com.jsnjfz.manage.modular.system.model.Site" parameterType="map">
         select s.*,c.title categoryTitle
         from site s left join category c on s.category_id = c.id
+        LEFT JOIN user_category_relation ur on c.id = ur.category_id
         where 1=1
+        <if test="userId != null and userId != ''">
+            and ur.user_id = #{userId}
+        </if>
         <if test="title != null and title != ''">
             and s.title like CONCAT('%',#{title},'%')
         </if>

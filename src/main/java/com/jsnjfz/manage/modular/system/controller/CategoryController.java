@@ -6,6 +6,8 @@ import cn.stylefeng.roses.core.util.ToolUtil;
 import cn.stylefeng.roses.kernel.model.exception.ServiceException;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
 import com.jsnjfz.manage.core.common.node.ZTreeNode;
+import com.jsnjfz.manage.core.shiro.ShiroKit;
+import com.jsnjfz.manage.core.shiro.ShiroUser;
 import com.jsnjfz.manage.modular.system.model.Category;
 import com.jsnjfz.manage.modular.system.service.impl.CategoryServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @Author fz
@@ -51,6 +54,10 @@ public class CategoryController extends BaseController {
     public Object list(@RequestParam(required = false) String title) {
         Map map = new HashMap();
         map.put("title", title);
+        ShiroUser shiroUser = ShiroKit.getUser();
+        if (Objects.nonNull(shiroUser)){
+            map.put("userId", shiroUser.getId());
+        }
         List<Map<String, Object>> mapList = categoryService.getCatogry(map);
         return super.warpObject(new BaseControllerWrapper(mapList) {
             @Override
