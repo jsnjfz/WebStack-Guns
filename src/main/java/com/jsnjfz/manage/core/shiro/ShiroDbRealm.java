@@ -51,7 +51,18 @@ public class ShiroDbRealm extends AuthorizingRealm {
             throws AuthenticationException {
         UserAuthService shiroFactory = UserAuthServiceServiceImpl.me();
         UsernamePasswordToken token = (UsernamePasswordToken) authcToken;
-        User user = shiroFactory.user(token.getUsername());
+
+        // UserAuthService#user 在账号不存在/被冻结时是直接抛异常而非返回 null，
+        // 因此必须在这里补偿耗时：否则「账号不存在」会在几毫秒内返回，而
+        // 「密码错误」要跑完 PBKDF2（约 240ms），仅凭响应时间即可枚举用户名
+        // （CVE-2026-23901）。实测未补偿时两者差 239ms / 97.7%。
+        User user;
+        try {
+            user = shiroFactory.user(token.getUsername());
+        } catch (AuthenticationException e) {
+            passwordService.burnTime(new String(token.getPassword()));
+            throw e;
+        }
         if (user == null) {
             passwordService.burnTime(new String(token.getPassword()));
             return null;
