@@ -52,6 +52,8 @@ spring:
 
 mybatis-plus:
   typeAliasesPackage: com.jsnjfz.manage.modular.system.model
+  configuration:
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 log:
   path: manage-logs
@@ -67,4 +69,3 @@ spring:
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     filters: wall,mergeStat
-
