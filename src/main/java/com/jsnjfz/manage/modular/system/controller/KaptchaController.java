@@ -46,8 +46,17 @@ import java.util.regex.Pattern;
 @RequestMapping("/kaptcha")
 public class KaptchaController {
 
+    /**
+     * 允许的图片文件名格式，两种都要放行：
+     * 1. UUID 形式（8-4-4-4-12）——当前 {@code /user/upload} 生成的新文件名；
+     * 2. 32 位十六进制形式——历史遗留数据，站点表中占绝大多数，
+     *    只认 UUID 会让这些图片全部 404。
+     * 仍然只允许十六进制字符与白名单扩展名，不含 '/'、'\' 或 '.'，
+     * 因此无法借文件名做路径穿越；下方仍保留 normalize + startsWith 兜底。
+     */
     private static final Pattern PICTURE_NAME = Pattern.compile(
-            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.(jpg|png|gif)$");
+            "^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+                    + "|[0-9a-fA-F]{32})\\.(?:jpg|jpeg|png|gif)$");
 
     @Autowired
     private GunsProperties gunsProperties;

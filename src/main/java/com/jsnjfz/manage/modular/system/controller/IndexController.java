@@ -50,7 +50,6 @@ public class IndexController extends BaseController {
         List<Category> categorySiteList = categoryService.getCatogrySite(null);
         model.addAttribute("categorySiteList", categorySiteList);
         model.addAttribute("titles", titles);
-        System.out.println(titles);
         return "/index.html";
     }
 
