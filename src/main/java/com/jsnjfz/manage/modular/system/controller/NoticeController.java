@@ -24,12 +24,14 @@ import com.jsnjfz.manage.core.common.constant.factory.ConstantFactory;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
 import com.jsnjfz.manage.core.log.LogObjectHolder;
 import com.jsnjfz.manage.core.shiro.ShiroKit;
+import com.jsnjfz.manage.core.security.RichTextSanitizer;
 import com.jsnjfz.manage.modular.system.model.Notice;
 import com.jsnjfz.manage.modular.system.service.INoticeService;
 import com.jsnjfz.manage.modular.system.warpper.NoticeWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.owasp.encoder.Encode;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -54,6 +56,9 @@ public class NoticeController extends BaseController {
     @Autowired
     private INoticeService noticeService;
 
+    @Autowired
+    private RichTextSanitizer richTextSanitizer;
+
     /**
      * 跳转到通知列表首页
      */
@@ -77,6 +82,9 @@ public class NoticeController extends BaseController {
     public String noticeUpdate(@PathVariable Integer noticeId, Model model) {
         Notice notice = this.noticeService.selectById(noticeId);
         model.addAttribute("notice", notice);
+        model.addAttribute("noticeTitle", Encode.forHtmlAttribute(notice.getTitle()));
+        model.addAttribute("noticeContent",
+                Encode.forHtmlContent(richTextSanitizer.sanitize(notice.getContent())));
         LogObjectHolder.me().set(notice);
         return PREFIX + "notice_edit.html";
     }
@@ -87,6 +95,10 @@ public class NoticeController extends BaseController {
     @RequestMapping("/hello")
     public String hello() {
         List<Map<String, Object>> notices = noticeService.list(null);
+        for (Map<String, Object> notice : notices) {
+            Object content = notice.get("content");
+            notice.put("content", richTextSanitizer.sanitize(content == null ? "" : content.toString()));
+        }
         super.setAttr("noticeList", notices);
         return "/blackboard.html";
     }
@@ -113,6 +125,7 @@ public class NoticeController extends BaseController {
         }
         notice.setCreater(ShiroKit.getUser().getId());
         notice.setCreatetime(new Date());
+        notice.setContent(richTextSanitizer.sanitize(notice.getContent()));
         notice.insert();
         return SUCCESS_TIP;
     }
@@ -145,7 +158,7 @@ public class NoticeController extends BaseController {
         }
         Notice old = this.noticeService.selectById(notice.getId());
         old.setTitle(notice.getTitle());
-        old.setContent(notice.getContent());
+        old.setContent(richTextSanitizer.sanitize(notice.getContent()));
         old.updateById();
         return SUCCESS_TIP;
     }

@@ -17,6 +17,7 @@ package com.jsnjfz.manage.core.aop;
 
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
 import com.jsnjfz.manage.core.common.exception.InvalidKaptchaException;
+import com.jsnjfz.manage.core.common.exception.InvalidUploadException;
 import com.jsnjfz.manage.core.log.LogManager;
 import com.jsnjfz.manage.core.log.factory.LogTaskFactory;
 import com.jsnjfz.manage.core.shiro.ShiroKit;
@@ -59,10 +60,19 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ResponseBody
     public ErrorResponseData bussiness(ServiceException e) {
-        LogManager.me().executeLog(LogTaskFactory.exceptionLog(ShiroKit.getUser().getId(), e));
+        if (ShiroKit.getUser() != null) {
+            LogManager.me().executeLog(LogTaskFactory.exceptionLog(ShiroKit.getUser().getId(), e));
+        }
         getRequest().setAttribute("tip", e.getMessage());
         log.error("业务异常:", e);
         return new ErrorResponseData(e.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(InvalidUploadException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorResponseData invalidUpload(InvalidUploadException e) {
+        return new ErrorResponseData(BizExceptionEnum.UPLOAD_ERROR.getCode(), e.getMessage());
     }
 
     /**
@@ -130,7 +140,9 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ResponseBody
     public ErrorResponseData notFount(RuntimeException e) {
-        LogManager.me().executeLog(LogTaskFactory.exceptionLog(ShiroKit.getUser().getId(), e));
+        if (ShiroKit.getUser() != null) {
+            LogManager.me().executeLog(LogTaskFactory.exceptionLog(ShiroKit.getUser().getId(), e));
+        }
         getRequest().setAttribute("tip", "服务器未知运行时异常");
         log.error("运行时异常:", e);
         return new ErrorResponseData(BizExceptionEnum.SERVER_ERROR.getCode(), BizExceptionEnum.SERVER_ERROR.getMessage());

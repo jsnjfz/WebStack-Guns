@@ -2,19 +2,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta name="author" content="viggo">
-    <title>webstack导航</title>
-    <meta name="keywords" content="新媒体，新媒体运营,新媒体工具,新媒体营销,新媒体智库">
-    <meta name="description" content="新媒体百宝箱-新媒体工作者快捷工具导航">
-    <link rel="shortcut icon" href="https://www.xmtbbx.com/img/favicon.png">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Arimo:400,700,400italic">
-    <link rel="stylesheet" href="/static/css/app.css">
-    <link rel="stylesheet" href="/static/css/login.css">
-    <script src="/static/js/app.js"></script>
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
 
+    <title>设计导航 - 设计资源与在线工具集合</title>
+    <meta name="author" content="jsnjfz">
+    <meta name="keywords" content="设计导航,设计资源,UI资源,图标素材,LOGO设计,配色工具,字体资源,摄影图库,Mockup,Sketch资源,在线工具,Chrome插件">
+    <meta name="description" content="面向设计师的网址导航：汇总 UI 资源、图标素材、LOGO 设计、配色工具、字体、摄影图库、Mockup、交互动效与在线工具等常用站点。">
+
+    <link rel="shortcut icon" href="/static/favicon.ico">
+
+    <!-- 防止深色模式首屏闪白：必须内联且早于样式表生效，逻辑与 nav.js 保持一致 -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('nav-theme');
+                if (t !== 'dark' && t !== 'light') {
+                    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="/static/css/app.css">
+    <!-- 前台导航页样式覆盖层，必须排在 app.css 之后 -->
+    <link rel="stylesheet" href="/static/css/nav.css">
+
+    <!-- 搜索/主题/平滑滚动，纯原生 JS，defer 不阻塞渲染 -->
+    <script src="/static/js/nav.js" defer></script>
 </head>

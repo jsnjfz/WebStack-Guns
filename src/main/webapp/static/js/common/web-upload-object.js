@@ -14,7 +14,7 @@
 		this.uploadBtnId = pictureId + "BtnId";
 		this.uploadPreId = pictureId + "PreId";
 		this.uploadUrl = Feng.ctxPath + '/mgr/upload';
-		this.fileSizeLimit = 100 * 1024 * 1024;
+		this.fileSizeLimit = 5 * 1024 * 1024;
 		this.picWidth = 800;
 		this.picHeight = 800;
         this.uploadBarId = null;
@@ -50,6 +50,9 @@
 				disableGlobalDnd : true,
 				duplicate : true,
 				server : this.uploadUrl,
+				headers : {
+					'X-CSRF-TOKEN' : window.getCsrfToken ? window.getCsrfToken() : ''
+				},
 				fileSingleSizeLimit : this.fileSizeLimit
 			});
 			

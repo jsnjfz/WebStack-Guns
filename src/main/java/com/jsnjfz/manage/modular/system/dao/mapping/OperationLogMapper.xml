@@ -3,16 +3,18 @@
 <mapper namespace="com.jsnjfz.manage.modular.system.dao.OperationLogMapper">
 
 	<select id="getOperationLogs" resultType="map">
-		select * from sys_operation_log where 1 = 1
-		<if test="beginTime != null and beginTime !='' and endTime != null and endTime != ''">
-			and (createTime between CONCAT(#{beginTime},' 00:00:00') and CONCAT(#{endTime},' 23:59:59'))
-		</if>
-		<if test="logName != null and logName !=''">
-			and logname like CONCAT('%',#{logName},'%')
-		</if>
-		<if test="logType != null and logType !=''">
-			and logtype like CONCAT('%',#{logType},'%')
-		</if>
+		select * from sys_operation_log
+		<where>
+			<if test="beginTime != null and beginTime !='' and endTime != null and endTime != ''">
+				(createTime between CONCAT(#{beginTime},' 00:00:00') and CONCAT(#{endTime},' 23:59:59'))
+			</if>
+			<if test="logName != null and logName !=''">
+				and logname like CONCAT('%',#{logName},'%')
+			</if>
+			<if test="logType != null and logType !=''">
+				and logtype like CONCAT('%',#{logType},'%')
+			</if>
+		</where>
 		<choose>
 			<when test="orderByField != null and orderByField !=''">
 				<choose>

@@ -1,0 +1,408 @@
+/*!
+ * nav.css - 前台导航首页样式覆盖层
+ * ------------------------------------------------------------
+ * 本文件在 app.css（Bootstrap 3 + 主题，799KB）之后加载，
+ * 利用“同特异性、后加载者胜出”的层叠规则覆盖 app.css 中的
+ * 既有选择器，不修改 app.css 本身，避免影响后台等其他页面。
+ *
+ * 顶部定义一套语义化 CSS 变量（亮色值对齐 app.css 现有取值），
+ * 并通过 [data-theme="dark"] 提供暗色取值；下方各选择器统一
+ * 读取变量，从而同时驱动亮/暗两套外观。
+ *
+ * 依赖契约：Bootstrap 3 栅格 (xs<768 / sm>=768 / md>=992 / lg>=1200)、
+ * Font Awesome 4、无构建步骤的纯 CSS。
+ * ------------------------------------------------------------ */
+
+/* ========== 1. 主题变量：亮色（默认） ========== */
+:root {
+  /* 页面与容器底色 */
+  --nav-bg: #f9f9f9;              /* 对齐 app.css body 背景 */
+  --nav-card-bg: #ffffff;         /* 对齐 .box2 背景 */
+  --nav-card-border: #e4ecf3;     /* 对齐 .box2 边框 */
+  --nav-toolbar-bg: #ffffff;      /* 对齐 .user-info-navbar 背景 */
+  --nav-footer-bg: #ffffff;       /* 页脚底色 */
+  --nav-sidebar-bg: #2c2e2f;      /* 对齐 .sidebar-menu 背景 */
+  --nav-sidebar-link: #979898;    /* 对齐侧边栏链接色 */
+  --nav-sidebar-border: #313437;  /* 对齐侧边栏分隔线 */
+  --nav-input-bg: #f5f6f8;        /* 搜索框底色 */
+  --nav-icon-bg: #ffffff;         /* 站点图标圆形底，防止透明 PNG 糊掉 */
+
+  /* 文字色阶 */
+  --nav-text-primary: #333333;    /* 正文/卡片标题 */
+  /* 原主题此处为 #999，在白底卡片上仅 2.85:1，低于 WCAG AA 的 4.5:1；
+     卡片描述是首页主要正文，故下调明度至 4.6:1，观感仍保持次要文字的克制 */
+  /* 取值需同时满足白色卡片(#fff)和页面底色(#f9f9f9)两种背景：4.93:1 / 4.68:1 */
+  --nav-text-secondary: #6b7178;  /* 描述/次要文字/占位符 */
+  --nav-heading: #222222;         /* 分区标题 */
+
+  /* 强调色与阴影 */
+  --nav-accent: #2f96e0;
+  --nav-accent-rgb: 47, 150, 224;
+  --nav-shadow-hover: rgba(0, 36, 100, 0.3); /* 对齐 .box2:hover 阴影 */
+
+  /* 通用尺寸 */
+  --nav-radius: 4px;
+  --nav-transition: all 0.3s ease;
+}
+
+/* ========== 2. 主题变量：暗色 ========== */
+[data-theme="dark"] {
+  --nav-bg: #16181d;
+  --nav-card-bg: #1e2128;
+  --nav-card-border: rgba(255, 255, 255, 0.08);
+  --nav-toolbar-bg: #1b1d23;
+  --nav-footer-bg: #1b1d23;
+  --nav-sidebar-bg: #202226;
+  --nav-sidebar-link: #9aa0aa;
+  --nav-sidebar-border: #2a2d33;
+  --nav-input-bg: #24272e;
+  --nav-icon-bg: #ffffff;
+
+  /* 以下文字色相对各自背景对比度均 >= 4.5:1（WCAG AA） */
+  --nav-text-primary: #e8e9ec;
+  --nav-text-secondary: #a8adb7;
+  --nav-heading: #f5f6f8;
+
+  --nav-accent: #4dabf5;
+  --nav-accent-rgb: 77, 171, 245;
+  --nav-shadow-hover: rgba(0, 0, 0, 0.55); /* 暗色下阴影改为纯黑而非偏蓝 */
+}
+
+/* ========== 3. 变量落地：覆盖 app.css 既有选择器 ========== */
+body {
+  background-color: var(--nav-bg);
+}
+.page-container .main-content {
+  background-color: var(--nav-bg);
+}
+/* app.css 里 .xe-widget.xe-conversations 以 (0,2,0) 设了 background:#fff，
+   单靠 .box2 (0,1,0) 覆盖不掉，这里必须用同等及以上特异性 */
+.nav-card.box2,
+.xe-widget.xe-conversations.box2 {
+  background-color: var(--nav-card-bg);
+  border-color: var(--nav-card-border);
+}
+.nav-card.box2:hover,
+.xe-widget.xe-conversations.box2:hover {
+  box-shadow: 0 26px 40px -24px var(--nav-shadow-hover);
+}
+.user-info-navbar {
+  background-color: var(--nav-toolbar-bg);
+  border-bottom-color: var(--nav-card-border);
+}
+/* app.css 给顶栏按钮写死了 border-bottom:1px solid #fff，暗色下会显成一道亮边 */
+.user-info-navbar .user-info-menu > li > a {
+  border-bottom-color: transparent;
+  color: var(--nav-text-secondary);
+}
+footer.main-footer {
+  background-color: var(--nav-footer-bg);
+  color: var(--nav-text-secondary);
+}
+.sidebar-menu {
+  background: var(--nav-sidebar-bg);
+}
+.sidebar-menu .main-menu a {
+  color: var(--nav-sidebar-link);
+  border-bottom-color: var(--nav-sidebar-border);
+}
+.xe-comment p {
+  color: var(--nav-text-secondary);
+}
+.xe-user-name strong {
+  color: var(--nav-heading);
+}
+h1,
+h2 {
+  color: var(--nav-heading);
+}
+.text-gray {
+  color: var(--nav-text-secondary);
+}
+::selection {
+  background: var(--nav-accent);
+  color: #fff;
+}
+
+/* ========== 4. 响应式网格：超宽屏补充列数 ========== */
+/* 模板已提供 col-xs-12/col-sm-6/col-md-4/col-lg-3（1/2/3/4 列），
+   这里针对大屏追加 5 列、6 列，避免 1920px+ 下右侧大片留白 */
+
+/* Bootstrap 3 的 .col-* 是 float 布局，卡片高度不一致时后面的卡片会被
+   前一张"卡住"，出现每行 5,5,1,1 这种错位。改用 flex 换行彻底规避，
+   顺带让同一行的卡片等高。.nav-col 仍保留 Bootstrap 的百分比宽度和 padding。 */
+.nav-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+.nav-col {
+  float: none;
+  display: flex;
+}
+.nav-col > .nav-card {
+  width: 100%;
+}
+
+@media (min-width: 1600px) {
+  .nav-col {
+    width: 20%;
+  }
+}
+@media (min-width: 2100px) {
+  .nav-col {
+    width: 16.6666667%;
+  }
+}
+
+/* ========== 5. 卡片：布局修复与截断降级 ========== */
+.nav-card,
+.nav-card:hover,
+.nav-card:focus,
+.nav-card:active,
+.nav-card:visited {
+  color: inherit;
+  text-decoration: none;
+}
+.nav-card {
+  display: flex;
+  align-items: center;
+  height: auto;
+  min-height: 86px; /* 由固定 height 改为最小高度，允许内容撑开 */
+}
+.nav-card .xe-comment-entry {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.nav-card .xe-user-img {
+  flex: 0 0 40px;
+}
+.nav-card-icon {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  float: none;
+  object-fit: contain;
+  background: var(--nav-icon-bg);
+  padding: 4px;
+  box-sizing: border-box;
+}
+.nav-card .xe-comment {
+  flex: 1 1 auto;
+  min-width: 0; /* flex 子项收缩前提，配合省略号截断 */
+}
+.nav-card .xe-user-name {
+  display: block;
+}
+/* -webkit-line-clamp 在少数非 WebKit 内核下不生效时的降级兜底，
+   避免长文本撑破卡片高度 */
+.overflowClip_1,
+.overflowClip_2 {
+  overflow: hidden;
+}
+.overflowClip_1 {
+  max-height: 1.6em;
+}
+.overflowClip_2 {
+  max-height: 3.2em;
+}
+
+@media (max-width: 767px) {
+  .box2 {
+    padding: 0 16px;
+  }
+}
+
+/* ========== 6. 工具条：搜索框 / 主题切换 ========== */
+.nav-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  height: 100%;
+  padding: 0 20px;
+}
+.nav-search-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.nav-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--nav-text-secondary);
+  font-size: 13px;
+  pointer-events: none;
+}
+.nav-search {
+  width: 220px;
+  max-width: 50vw;
+  padding: 6px 30px;
+  border: 1px solid var(--nav-card-border);
+  border-radius: 20px;
+  background: var(--nav-input-bg);
+  color: var(--nav-text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.nav-search::placeholder {
+  color: var(--nav-text-secondary);
+}
+.nav-search:focus {
+  outline: none;
+  border-color: var(--nav-accent);
+  box-shadow: 0 0 0 3px rgba(var(--nav-accent-rgb), 0.25);
+}
+.nav-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--nav-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.nav-search-clear:hover {
+  color: var(--nav-text-primary);
+}
+.nav-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--nav-card-border);
+  border-radius: 50%;
+  background: var(--nav-card-bg);
+  color: var(--nav-text-secondary);
+  cursor: pointer;
+  transition: var(--nav-transition);
+}
+.nav-theme-toggle:hover {
+  color: var(--nav-accent);
+  border-color: var(--nav-accent);
+}
+@media (max-width: 767px) {
+  .nav-toolbar {
+    justify-content: flex-end;
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .nav-search {
+    width: 130px;
+    max-width: 45vw;
+  }
+}
+
+/* ========== 7. 分区间距与标题 ========== */
+.nav-page-title {
+  /* 父级 .main-content 已有 30px padding，此处不再额外左右缩进 */
+  margin: 0 0 22px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--nav-text-secondary);
+}
+.nav-section {
+  margin-bottom: 30px;
+}
+.nav-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--nav-card-border);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--nav-heading);
+}
+.nav-section-title i {
+  color: var(--nav-accent);
+  font-size: 14px;
+}
+
+/* ========== 8. 可访问性 ========== */
+.nav-skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 2000;
+  padding: 10px 16px;
+  background: var(--nav-accent);
+  color: #fff;
+  border-radius: 0 0 6px 0;
+}
+.nav-skip-link:focus {
+  left: 0;
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+.nav-card:focus-visible,
+.nav-search:focus-visible,
+.nav-search-clear:focus-visible,
+.nav-theme-toggle:focus-visible,
+.nav-skip-link:focus-visible {
+  outline: 3px solid var(--nav-accent);
+  outline-offset: 2px;
+}
+
+/* ========== 9. 动效：尊重“减少动态效果”系统设置 ========== */
+@media (prefers-reduced-motion: reduce) {
+  .box2,
+  .nav-search,
+  .nav-theme-toggle {
+    transition: none !important;
+  }
+  .box2:hover {
+    transform: none !important;
+  }
+}
+
+/* ========== 10. 筛选状态（配合前端搜索脚本使用） ========== */
+.nav-hidden {
+  display: none !important;
+}
+.nav-no-result {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--nav-text-secondary);
+  font-size: 14px;
+}
+
+/* ========== 11. 移动端顶栏 ========== */
+/* app.css 在 max-width:768px 下用 .page-container .main-content .navbar.user-info-navbar
+   把整条顶栏隐藏了，会连带藏掉搜索框和主题切换。这里以同等特异性放行，
+   并隐藏其中的汉堡按钮——移动端展开菜单由侧边栏自带的按钮负责，不必重复。 */
+@media screen and (max-width: 768px) {
+  .page-container .main-content .navbar.user-info-navbar {
+    display: block;
+    min-height: 0;
+    padding: 8px 15px;
+    margin: 0 -15px 10px;
+  }
+  .page-container .main-content .navbar.user-info-navbar .user-info-menu {
+    display: none;
+  }
+  .nav-toolbar {
+    width: 100%;
+    gap: 8px;
+  }
+  .nav-search-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  /* 桌面端是 220px 定宽 + max-width:50vw，窄屏下要改成撑满容器 */
+  .nav-search {
+    width: 100%;
+    max-width: none;
+  }
+}

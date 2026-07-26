@@ -8,48 +8,63 @@
 
 ## 运行
 
-克隆代码：
+运行环境：
+
+- JDK 8（本项目会持续用 JDK 8 编译和运行）
+- Maven 3.9+
+- MySQL 8.x
+
+先确认实际使用的是 JDK 8：
 
 ```shell
-git clone https://github.com/jsnjfz/WebStack-Guns.git
+java -version
+mvn -version
 ```
 
-导入IDE，建议用IDEA打开项目目录，待maven下载完jar包
+构建已配置 Maven Enforcer，使用 JDK 9 或更高版本会直接失败，避免误把高版本 API 编译进项目。
 
-
-编辑配置：
-
-```
-application.yml
-```
-```
-上传文件路径，注意windows环境和linux环境：
-file-upload-path
-如需显示初始网站图标请把Webstack-Guns/src/main/webapp/static/tmp下的图片复制到上传文件路径
-```
-
-```
-...
-数据库连接，用户名密码：
-url
-username
-password
-...
-```
-
-新建数据库guns(utf8mb4)，导入数据：
+在本机 MySQL 中创建数据库并导入初始化数据：
 
 ```shell
-guns.sql
+mysql -h127.0.0.1 -P3306 -u你的账号 -p \
+  -e "CREATE DATABASE IF NOT EXISTS guns CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+mysql -h127.0.0.1 -P3306 -u你的账号 -p guns < sql/guns.sql
 ```
 
-maven打包或者IDE启动服务：
+如果是从旧版数据库升级，只需执行一次：
 
 ```shell
-$ java -jar Webstack-Guns-1.0.jar
+mysql -h127.0.0.1 -P3306 -u你的账号 -p guns < sql/security-upgrade.sql
 ```
 
-启动完成：http://127.0.0.1:8000
+数据库密码不再写死在 `application.yml`，通过环境变量传入：
+
+```shell
+export DB_URL='jdbc:mysql://127.0.0.1:3306/guns?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&useSSL=false&serverTimezone=Asia/Shanghai'
+export DB_USERNAME='你的账号'
+read -s DB_PASSWORD
+export DB_PASSWORD
+
+mvn clean verify
+java -jar target/Webstack-Guns-1.0.jar
+```
+
+启动完成后访问：<http://127.0.0.1:8000>
+
+本地未配置以下密钥时，应用会在每次启动时生成临时随机密钥；正式部署应显式配置，否则重启后旧 JWT 和 rememberMe Cookie 会失效：
+
+```shell
+export GUNS_JWT_SECRET="$(openssl rand -base64 64)"
+export GUNS_REMEMBER_ME_CIPHER_KEY="$(openssl rand -base64 16)"
+```
+
+其他可选配置：
+
+- `SERVER_ADDRESS`：默认 `127.0.0.1`；需要对外监听时显式设为 `0.0.0.0`
+- `SERVER_PORT`：默认 `8000`
+- `GUNS_FILE_UPLOAD_PATH`：默认使用系统临时目录下的独立上传目录
+- `GUNS_SECURE_COOKIE`：HTTPS 部署必须设为 `true`
+- `GUNS_SWAGGER_OPEN`、`GUNS_DRUID_MONITOR_OPEN`：默认关闭
 
 
 
@@ -83,7 +98,8 @@ $ java -jar Webstack-Guns-1.0.jar
 
 
 ## 声明
-如果在外网使用一定要升级shiro版本到最新，防止安全漏洞，因框架漏洞产生的服务器被攻击或渗透本人概不负责
+
+项目受 JDK 8 约束，采用 Spring Boot 2.7.x / Spring Framework 5.3.x / Shiro 1.13.x 的兼容线，并在应用层补充了登录限速、会话轮换、安全 Cookie、CSRF、富文本净化、上传校验和安全响应头。外网部署仍应放在 HTTPS 反向代理之后，并在网关层增加统一限速和访问日志告警。
 
 ## License
 

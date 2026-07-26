@@ -45,6 +45,14 @@ public class GunsProperties {
 
     private Boolean springSessionOpen = false;
 
+    private Boolean secureCookie = false;
+
+    private Boolean druidMonitorOpen = false;
+
+    private String jwtSecret;
+
+    private String rememberMeCipherKey;
+
     /**
      * session 失效时间（默认为30分钟 单位：秒）
      */
@@ -58,20 +66,19 @@ public class GunsProperties {
     public String getFileUploadPath() {
         //如果没有写文件上传路径,保存到临时目录
         if (ToolUtil.isEmpty(fileUploadPath)) {
-            return getTempPath();
-        } else {
-            //判断有没有结尾符,没有得加上
-            if (!fileUploadPath.endsWith(File.separator)) {
-                fileUploadPath = fileUploadPath + File.separator;
-            }
-            //判断目录存不存在,不存在得加上
-            if (!haveCreatePath) {
-                File file = new File(fileUploadPath);
-                file.mkdirs();
-                haveCreatePath = true;
-            }
-            return fileUploadPath;
+            fileUploadPath = new File(getTempPath(), "webstack-guns-uploads").getAbsolutePath();
         }
+        //判断有没有结尾符,没有得加上
+        if (!fileUploadPath.endsWith(File.separator)) {
+            fileUploadPath = fileUploadPath + File.separator;
+        }
+        //判断目录存不存在,不存在得加上
+        if (!haveCreatePath) {
+            File file = new File(fileUploadPath);
+            file.mkdirs();
+            haveCreatePath = true;
+        }
+        return fileUploadPath;
     }
 
     public void setFileUploadPath(String fileUploadPath) {
@@ -116,5 +123,37 @@ public class GunsProperties {
 
     public void setSessionValidationInterval(Integer sessionValidationInterval) {
         this.sessionValidationInterval = sessionValidationInterval;
+    }
+
+    public Boolean getSecureCookie() {
+        return secureCookie;
+    }
+
+    public void setSecureCookie(Boolean secureCookie) {
+        this.secureCookie = secureCookie;
+    }
+
+    public Boolean getDruidMonitorOpen() {
+        return druidMonitorOpen;
+    }
+
+    public void setDruidMonitorOpen(Boolean druidMonitorOpen) {
+        this.druidMonitorOpen = druidMonitorOpen;
+    }
+
+    public String getJwtSecret() {
+        return jwtSecret;
+    }
+
+    public void setJwtSecret(String jwtSecret) {
+        this.jwtSecret = jwtSecret;
+    }
+
+    public String getRememberMeCipherKey() {
+        return rememberMeCipherKey;
+    }
+
+    public void setRememberMeCipherKey(String rememberMeCipherKey) {
+        this.rememberMeCipherKey = rememberMeCipherKey;
     }
 }

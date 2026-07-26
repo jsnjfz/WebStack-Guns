@@ -15,29 +15,23 @@
  */
 package com.jsnjfz.manage.modular.api;
 
-import com.jsnjfz.manage.core.shiro.ShiroKit;
-import com.jsnjfz.manage.core.shiro.ShiroUser;
 import com.jsnjfz.manage.core.util.JwtTokenUtil;
-import com.jsnjfz.manage.modular.system.dao.UserMapper;
-import com.jsnjfz.manage.modular.system.model.User;
-import com.jsnjfz.manage.core.shiro.ShiroKit;
-import com.jsnjfz.manage.core.shiro.ShiroUser;
-import com.jsnjfz.manage.core.util.JwtTokenUtil;
+import com.jsnjfz.manage.core.security.PasswordService;
+import com.jsnjfz.manage.core.security.LoginAttemptService;
+import com.jsnjfz.manage.core.common.constant.state.ManagerStatus;
 import com.jsnjfz.manage.modular.system.dao.UserMapper;
 import com.jsnjfz.manage.modular.system.model.User;
 import cn.stylefeng.roses.core.base.controller.BaseController;
 import cn.stylefeng.roses.core.reqres.response.ErrorResponseData;
-import org.apache.shiro.authc.SimpleAuthenticationInfo;
-import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
-import org.apache.shiro.crypto.hash.Md5Hash;
-import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 
 /**
@@ -53,38 +47,53 @@ public class ApiController extends BaseController {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
     /**
      * api登录接口，通过账号密码获取token
      */
-    @RequestMapping("/auth")
+    @RequestMapping(value = "/auth", method = RequestMethod.POST)
     public Object auth(@RequestParam("username") String username,
-                       @RequestParam("password") String password) {
-
-        //封装请求账号密码为shiro可验证的token
-        UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken(username, password.toCharArray());
+                       @RequestParam("password") String password,
+                       HttpServletRequest request) {
 
         //获取数据库中的账号密码，准备比对
+        String remoteAddress = request.getRemoteAddr();
+        if (!loginAttemptService.isAllowed(remoteAddress, username)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(new ErrorResponseData(429, "登录失败次数过多，请稍后再试"));
+        }
         User user = userMapper.getByAccount(username);
-
-        String credentials = user.getPassword();
-        String salt = user.getSalt();
-        ByteSource credentialsSalt = new Md5Hash(salt);
-        SimpleAuthenticationInfo simpleAuthenticationInfo = new SimpleAuthenticationInfo(
-                new ShiroUser(), credentials, credentialsSalt, "");
-
-        //校验用户账号密码
-        HashedCredentialsMatcher md5CredentialsMatcher = new HashedCredentialsMatcher();
-        md5CredentialsMatcher.setHashAlgorithmName(ShiroKit.hashAlgorithmName);
-        md5CredentialsMatcher.setHashIterations(ShiroKit.hashIterations);
-        boolean passwordTrueFlag = md5CredentialsMatcher.doCredentialsMatch(
-                usernamePasswordToken, simpleAuthenticationInfo);
+        boolean credentialsMatch = passwordService.matchesOrBurn(
+                password,
+                user == null ? null : user.getPassword(),
+                user == null ? null : user.getSalt());
+        boolean passwordTrueFlag = credentialsMatch
+                && user != null
+                && user.getStatus() != null
+                && ManagerStatus.OK.getCode() == user.getStatus();
 
         if (passwordTrueFlag) {
+            loginAttemptService.reset(remoteAddress, username);
+            if (!passwordService.isModern(user.getPassword())) {
+                user.setPassword(passwordService.encode(password));
+                user.setSalt("");
+                user.updateById();
+            }
             HashMap<String, Object> result = new HashMap<>();
-            result.put("token", JwtTokenUtil.generateToken(String.valueOf(user.getId())));
+            result.put("token", jwtTokenUtil.generateToken(String.valueOf(user.getId())));
             return result;
         } else {
-            return new ErrorResponseData(500, "账号密码错误！");
+            loginAttemptService.recordFailure(remoteAddress, username);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ErrorResponseData(401, "账号密码错误！"));
         }
     }
 
@@ -97,4 +106,3 @@ public class ApiController extends BaseController {
     }
 
 }
-

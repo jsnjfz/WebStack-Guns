@@ -26,20 +26,23 @@ import com.jsnjfz.manage.core.shiro.ShiroKit;
 import com.jsnjfz.manage.core.shiro.ShiroUser;
 import com.jsnjfz.manage.core.util.ApiMenuFilter;
 import com.jsnjfz.manage.core.util.KaptchaUtil;
-import com.jsnjfz.manage.modular.system.model.User;
-import com.jsnjfz.manage.modular.system.service.IMenuService;
-import com.jsnjfz.manage.modular.system.service.IUserService;
+import com.jsnjfz.manage.core.security.PasswordService;
+import com.jsnjfz.manage.core.security.LoginAttemptService;
 import cn.stylefeng.roses.core.base.controller.BaseController;
 import cn.stylefeng.roses.core.util.ToolUtil;
 import com.google.code.kaptcha.Constants;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.ExcessiveAttemptsException;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.session.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static cn.stylefeng.roses.core.util.HttpContext.getIp;
@@ -58,6 +61,12 @@ public class LoginController extends BaseController {
 
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
 
     /**
      * 跳转到主页
@@ -102,11 +111,15 @@ public class LoginController extends BaseController {
      * 点击登录执行的动作
      */
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public String loginVali() {
+    public String loginVali(HttpServletRequest request) {
 
         String username = super.getPara("username").trim();
         String password = super.getPara("password").trim();
         String remember = super.getPara("remember");
+        String remoteAddress = request.getRemoteAddr();
+        if (!loginAttemptService.isAllowed(remoteAddress, username)) {
+            throw new ExcessiveAttemptsException("登录失败次数过多，请稍后再试");
+        }
 
         //验证验证码是否正确
         if (KaptchaUtil.getKaptchaOnOff()) {
@@ -126,15 +139,32 @@ public class LoginController extends BaseController {
             token.setRememberMe(false);
         }
 
-        currentUser.login(token);
+        Session existingSession = currentUser.getSession(false);
+        if (existingSession != null) {
+            currentUser.logout();
+        }
+        try {
+            currentUser.login(token);
+        } catch (AuthenticationException e) {
+            loginAttemptService.recordFailure(remoteAddress, username);
+            throw e;
+        }
+        loginAttemptService.reset(remoteAddress, username);
 
         ShiroUser shiroUser = ShiroKit.getUser();
-        super.getSession().setAttribute("shiroUser", shiroUser);
-        super.getSession().setAttribute("username", shiroUser.getAccount());
+        User user = userService.getByAccount(username);
+        if (user != null && !passwordService.isModern(user.getPassword())) {
+            user.setPassword(passwordService.encode(password));
+            user.setSalt("");
+            userService.updateById(user);
+        }
+        Session authenticatedSession = currentUser.getSession(true);
+        authenticatedSession.setAttribute("shiroUser", shiroUser);
+        authenticatedSession.setAttribute("username", shiroUser.getAccount());
 
         LogManager.me().executeLog(LogTaskFactory.loginLog(shiroUser.getId(), getIp()));
 
-        ShiroKit.getSession().setAttribute("sessionFlag", true);
+        authenticatedSession.setAttribute("sessionFlag", true);
 
         return REDIRECT + "/admin";
     }
