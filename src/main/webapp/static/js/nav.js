@@ -8,6 +8,7 @@
  *   3 侧边栏死链修复（原 $(href).offset() 遇不存在锚点会抛错，如线上 #test/#灵感采集）
  *   4 平滑滚动（原 $("a.smooth").click(...)） 5 滚动高亮 scrollspy(新增) 6 页脚年份
  *   7 站点图标多级兜底(新增，替代每张卡片内联 onerror)
+ *   8 卡片补充域名(新增) 9 侧边栏分类计数(新增)
  *
  * 各 initXxx 模块独立、各自 try/catch，互不影响；页面缺元素时静默跳过。
  */
@@ -136,7 +137,35 @@
       var cols = Array.from(sectionEl.querySelectorAll('.nav-col')).map(function (colEl) {
         return { el: colEl, text: extractCardText(colEl, sectionName) };
       });
-      return { el: sectionEl, cols: cols };
+      return { el: sectionEl, name: sectionName, cols: cols };
+    });
+
+    // 检索结果条：命中数 + 按分类收窄的 chip。仅在检索态出现，
+    // 浏览态不占位，避免和侧边栏的分类导航重复。
+    var bar = document.createElement('div');
+    bar.id = 'nav-results-bar';
+    bar.className = 'nav-results-bar';
+    bar.hidden = true;
+    bar.innerHTML = '<p class="nav-results-count" role="status" aria-live="polite"></p>' +
+                    '<div class="nav-results-chips"></div>';
+    var barCount = bar.querySelector('.nav-results-count');
+    var barChips = bar.querySelector('.nav-results-chips');
+    var pageTitle = main.querySelector('.nav-page-title');
+    if (pageTitle && pageTitle.nextSibling) {
+      main.insertBefore(bar, pageTitle.nextSibling);
+    } else {
+      main.insertBefore(bar, main.firstChild);
+    }
+
+    // 当前按分类收窄的选择；空串表示「全部」
+    var activeCat = '';
+
+    // chip 用事件委托，避免每次重建后重新绑定
+    barChips.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('.nav-chip') : null;
+      if (!btn) return;
+      activeCat = btn.getAttribute('data-cat') || '';
+      applyFilter(true); // 保留 chip 列表，只切换收窄条件
     });
 
     // 缓存侧边栏链接 -> 目标分区，供筛选时联动隐藏菜单项
@@ -147,40 +176,90 @@
 
     var debounceTimer = null;
 
-    function applyFilter() {
+    function renderChips(hits, total) {
+      // 只命中一个分类时整排 chip 都没有意义（只会剩一个「全部」），直接不渲染
+      if (hits.length <= 1) {
+        barChips.innerHTML = '';
+        return;
+      }
+      // hits: [{name, n}]，按命中数降序；只列出真正命中的分类
+      var html = '<button type="button" class="nav-chip' + (activeCat ? '' : ' is-active') +
+                 '" data-cat="">全部 <span class="nav-chip-n">' + total + '</span></button>';
+      hits.forEach(function (h) {
+        var on = activeCat === h.name;
+        html += '<button type="button" class="nav-chip' + (on ? ' is-active' : '') +
+                '" data-cat="' + h.name.replace(/"/g, '&quot;') + '">' +
+                h.name.replace(/[<>&]/g, '') + ' <span class="nav-chip-n">' + h.n + '</span></button>';
+      });
+      barChips.innerHTML = html;
+    }
+
+    /**
+     * @param {boolean} keepChips true 表示本次只是切换分类 chip，
+     *        关键词未变，不重建 chip 列表（否则点一下 chip 列表就只剩它自己）
+     */
+    function applyFilter(keepChips) {
       var raw = input.value.trim().toLowerCase();
       var words = raw ? raw.split(/\s+/) : [];
-      var anyVisible = false;
+      var searching = words.length > 0;
+      if (!searching) activeCat = ''; // 退出检索态时清掉分类收窄
+
+      var hits = [];      // 关键词命中的分类分布（不受 chip 影响）
+      var shown = 0;      // 最终可见卡片数（受 chip 收窄影响）
 
       sections.forEach(function (section) {
-        var sectionVisible = false;
+        var hitInSection = 0;
+        var shownInSection = 0;
+        var catOk = !activeCat || section.name === activeCat;
+
         section.cols.forEach(function (col) {
-          var match = words.length === 0 || words.every(function (w) { return col.text.indexOf(w) !== -1; });
-          col.el.classList.toggle('nav-hidden', !match);
-          if (match) {
-            sectionVisible = true;
-            anyVisible = true;
-          }
+          var match = !searching || words.every(function (w) { return col.text.indexOf(w) !== -1; });
+          if (match) hitInSection++;
+          var visible = match && catOk;
+          col.el.classList.toggle('nav-hidden', !visible);
+          if (visible) shownInSection++;
         });
-        section.el.classList.toggle('nav-hidden', !sectionVisible);
+
+        if (hitInSection > 0) hits.push({ name: section.name, n: hitInSection });
+        shown += shownInSection;
+        // 检索态下分区容器本身被 display:contents 消融，隐藏与否只影响浏览态
+        section.el.classList.toggle('nav-hidden', shownInSection === 0);
       });
 
-      var searching = words.length > 0;
+      // 检索态：正文切换为扁平结果网格（CSS 侧用 .nav-searching 驱动）
+      main.classList.toggle('nav-searching', searching);
+      main.dataset.navSearching = searching ? '1' : ''; // 供 scrollspy 判断是否暂停
+
+      if (searching) {
+        hits.sort(function (a, b) { return b.n - a.n; });
+        var total = hits.reduce(function (a, b) { return a + b.n; }, 0);
+        barCount.textContent = total > 0
+          ? '找到 ' + total + ' 个站点' + (activeCat ? '，已筛选「' + activeCat + '」' + shown + ' 个' : '')
+          : '没有匹配的站点';
+        if (!keepChips) renderChips(hits, total);
+        barChips.hidden = barChips.children.length === 0;
+        bar.hidden = false;
+      } else {
+        bar.hidden = true;
+        barChips.innerHTML = '';
+      }
+
+      // 检索态下侧边栏分类与结果对不上，联动隐藏未命中的项
       sidebarLinks.forEach(function (link) {
         if (!link.li) return;
         var hidden = searching && link.sectionEl ? link.sectionEl.classList.contains('nav-hidden') : false;
         link.li.classList.toggle('nav-hidden', hidden);
       });
 
-      if (noResult) noResult.hidden = anyVisible;
+      if (noResult) noResult.hidden = shown > 0;
       if (clearBtn) clearBtn.hidden = raw.length === 0;
-
-      main.dataset.navSearching = searching ? '1' : ''; // 供 scrollspy 判断是否暂停
     }
 
     function scheduleFilter() {
       if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(applyFilter, 120);
+      // 显式包一层：关键词变化时必须重建 chip，不能把 setTimeout 的回调参数
+      // 当成 keepChips 传进去
+      debounceTimer = setTimeout(function () { applyFilter(false); }, 120);
     }
 
     function resetSearch() {
@@ -317,6 +396,63 @@
   }
 
   /* ===================== 启动 ===================== */
+  /* ===================== 8. 卡片补充域名 ===================== */
+  // 实测 207 条描述里有 67% 超过两行被截断、22 条与标题互相包含，信息价值低；
+  // 而 207/207 都能解析出域名。对导航站来说 dribbble.com 比「全球UI设计师
+  // 作品分享平台」更好认，故在标题行补一个域名，描述压到一行。
+  function initCardDomain() {
+    var cards = document.querySelectorAll('a.nav-card');
+    if (!cards.length) return;
+
+    Array.prototype.forEach.call(cards, function (card) {
+      var descEl = card.querySelector('.xe-comment p');
+      if (!descEl || descEl.querySelector('.nav-card-domain')) return;
+
+      var host = '';
+      try {
+        host = new URL(card.href, window.location.origin).hostname.replace(/^www\./, '');
+      } catch (e) {
+        return; // 解析不出来就保持原样，不插入空元素
+      }
+      if (!host) return;
+
+      // 域名放在描述行开头而不是标题行：标题行并排时两者会互相挤压，
+      // 出现「Freebie Su… freebiesupply…」这种双双截断，反而不如只显示标题。
+      // 放进 <p> 内部可直接复用它的单行省略，无需额外包裹层。
+      var span = document.createElement('span');
+      span.className = 'nav-card-domain';
+      span.textContent = host;
+      descEl.insertBefore(span, descEl.firstChild);
+
+      // 完整描述可能被一行截断，挂到 title 上便于悬停查看
+      var desc = (descEl.textContent || '').replace(host, '').trim();
+      if (desc && !card.title) card.title = desc;
+    });
+  }
+
+  /* ===================== 9. 侧边栏分类计数 ===================== */
+  // 25 个分类外观完全一致，但体量差 24 倍（摄影图库 24 个 vs 媒体导航 1 个），
+  // 点进去才知道有多少。这里在菜单项右侧补一个计数。
+  function initSidebarCounts() {
+    var menu = document.getElementById('main-menu');
+    if (!menu) return;
+
+    Array.prototype.forEach.call(menu.querySelectorAll('a.smooth'), function (a) {
+      if (a.querySelector('.nav-menu-count')) return;
+      var target = document.getElementById(getHashId(a.getAttribute('href')));
+      var section = target ? target.closest('.nav-section') : null;
+      if (!section) return;
+      var n = section.querySelectorAll('.nav-col').length;
+      if (!n) return;
+
+      var badge = document.createElement('span');
+      badge.className = 'nav-menu-count';
+      badge.textContent = n;
+      badge.setAttribute('aria-hidden', 'true'); // 纯视觉提示，避免读屏念成菜单名的一部分
+      a.appendChild(badge);
+    });
+  }
+
   /* ===================== 7. 站点图标兜底 ===================== */
   // 图标优先走 /static/tmp/（随仓库发布、可缓存、无重定向），取不到再退回
   // /kaptcha/（后台新上传的图只在上传目录里），最后退到本地占位图。
@@ -368,7 +504,9 @@
   function boot() {
     safeRun(initIconFallback); // 需最早注册，尽量赶在图片加载失败之前
     safeRun(initTheme);
-    safeRun(initSidebarDeadLinks);
+    safeRun(initSidebarDeadLinks);   // 先清死链
+    safeRun(initSidebarCounts);      // 再对剩下的菜单项计数
+    safeRun(initCardDomain);         // 须早于 initSearch，使域名进入检索文本缓存
     safeRun(initSearch);
     safeRun(initSmoothScroll);
     safeRun(initScrollSpy);

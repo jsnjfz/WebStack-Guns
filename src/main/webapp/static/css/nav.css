@@ -21,9 +21,15 @@
   --nav-card-border: #e4ecf3;     /* 对齐 .box2 边框 */
   --nav-toolbar-bg: #ffffff;      /* 对齐 .user-info-navbar 背景 */
   --nav-footer-bg: #ffffff;       /* 页脚底色 */
-  --nav-sidebar-bg: #2c2e2f;      /* 对齐 .sidebar-menu 背景 */
-  --nav-sidebar-link: #979898;    /* 对齐侧边栏链接色 */
-  --nav-sidebar-border: #313437;  /* 对齐侧边栏分隔线 */
+  /* 侧边栏改为浅色：深色侧栏 + 浅色内容是后台管理模板的典型范式
+     （本项目前身即 Guns 后台），统一成浅色后整体更像一个内容站 */
+  --nav-sidebar-bg: #ffffff;
+  --nav-sidebar-link: #6b7178;
+  --nav-sidebar-border: rgba(16, 24, 40, 0.09);
+  --nav-sidebar-hover-bg: rgba(16, 24, 40, 0.05);
+  --nav-sidebar-hover-fg: #222222;
+  --nav-sidebar-active-bg: rgba(232, 147, 12, 0.13);
+  --nav-sidebar-active-fg: #8a5800; /* 浅底上需更深的琥珀才够对比度 */
   --nav-input-bg: #f5f6f8;        /* 搜索框底色 */
   --nav-icon-bg: #ffffff;         /* 站点图标圆形底，防止透明 PNG 糊掉 */
 
@@ -59,9 +65,13 @@
   --nav-card-border: rgba(255, 255, 255, 0.08);
   --nav-toolbar-bg: #1b1d23;
   --nav-footer-bg: #1b1d23;
-  --nav-sidebar-bg: #202226;
+  --nav-sidebar-bg: #1b1d23;
   --nav-sidebar-link: #9aa0aa;
-  --nav-sidebar-border: #2a2d33;
+  --nav-sidebar-border: rgba(255, 255, 255, 0.07);
+  --nav-sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+  --nav-sidebar-hover-fg: #ffffff;
+  --nav-sidebar-active-bg: rgba(245, 181, 68, 0.14);
+  --nav-sidebar-active-fg: #f5b544;
   --nav-input-bg: #24272e;
   --nav-icon-bg: #ffffff;
 
@@ -140,6 +150,7 @@ footer.main-footer {
 }
 .sidebar-menu {
   background: var(--nav-sidebar-bg);
+  border-right: 1px solid var(--nav-sidebar-border);
 }
 /* 侧边栏：去掉条目间的 1px 分隔线（老式列表观感），改用间距 + 圆角块状选中态 */
 .sidebar-menu .main-menu {
@@ -156,14 +167,14 @@ footer.main-footer {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .sidebar-menu .main-menu a:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: var(--nav-sidebar-hover-bg);
+  color: var(--nav-sidebar-hover-fg);
 }
-/* 侧边栏在亮/暗两种主题下都是深色面板，选中态固定用提亮版琥珀，
-   不跟随 --nav-accent（亮色主题下那个值是为白底压暗过的，放在这里仅 4.37:1） */
+/* 选中态的前景/背景走独立变量：亮色侧栏是浅底，需要压暗的琥珀；
+   暗色侧栏是深底，需要提亮的琥珀。两者不能共用 --nav-accent。 */
 .sidebar-menu .main-menu li.active > a {
-  background: rgba(245, 181, 68, 0.14);
-  color: #f5b544;
+  background: var(--nav-sidebar-active-bg);
+  color: var(--nav-sidebar-active-fg);
   font-weight: 600;
 }
 .sidebar-menu .main-menu a > i {
@@ -172,6 +183,20 @@ footer.main-footer {
 }
 .sidebar-menu .logo-env {
   border-bottom: none;
+}
+/* 主题化 logo：亮色侧栏用深字版，暗色侧栏用白字版 */
+.nav-logo-on-dark {
+  display: none;
+}
+[data-theme="dark"] .nav-logo-on-light {
+  display: none;
+}
+[data-theme="dark"] .nav-logo-on-dark {
+  display: block;
+}
+/* 收起态的图标 logo 只有白字版，浅色侧栏下加深以免糊在白底上 */
+[data-theme="light"] .logo-collapsed img {
+  filter: brightness(0.35) saturate(1.4);
 }
 
 .xe-comment p {
@@ -286,6 +311,17 @@ h2 {
 .nav-card .xe-user-name {
   display: block;
 }
+/* 域名：导航站里 dribbble.com 比「全球UI设计师作品分享平台」更好认。
+   排在描述行首、与描述共用一行省略，标题行因此可以独占整行不被挤压。 */
+.nav-card-domain {
+  color: var(--nav-text-primary);
+  opacity: 0.55;
+}
+.nav-card-domain::after {
+  content: " · ";
+  opacity: 0.6;
+}
+
 /* -webkit-line-clamp 在少数非 WebKit 内核下不生效时的降级兜底，
    避免长文本撑破卡片高度 */
 .overflowClip_1,
@@ -295,8 +331,26 @@ h2 {
 .overflowClip_1 {
   max-height: 1.6em;
 }
+/* 描述由两行压到一行：67% 的描述本来就超长被截断，两行并没有把话说完，
+   完整内容已挂到卡片 title 上，悬停可见 */
 .overflowClip_2 {
-  max-height: 3.2em;
+  -webkit-line-clamp: 1;
+  max-height: 1.6em;
+}
+
+/* 侧边栏分类计数：计数是信息不是装饰，原先 opacity .45 实测仅 1.48:1
+   几乎不可见。改为不降透明度，靠字号和 tabular-nums 建立次要感。 */
+.nav-menu-count {
+  float: right;
+  margin-left: 8px;
+  font-size: 11.5px;
+  line-height: inherit;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+/* 侧边栏收起时不显示计数 */
+.sidebar-menu.collapsed .nav-menu-count {
+  display: none;
 }
 
 @media (max-width: 767px) {
@@ -464,6 +518,83 @@ h2 {
 /* ========== 10. 筛选状态（配合前端搜索脚本使用） ========== */
 .nav-hidden {
   display: none !important;
+}
+
+/* ---------- 检索态：把分类分组「消融」成一张扁平结果网格 ----------
+   浏览态按分类分组是对的，但检索是扁平语义：搜一个词命中的站点会散落在
+   十几个分区里，每个分区只剩 1-2 张卡却仍占一整行标题，结果被撑得很碎
+   （实测搜「ui」命中 33 个散在 15 个分区，要滚 3.6 屏）。
+   这里用 display:contents 让 .nav-section / .nav-grid 在布局上消失，
+   卡片直接成为 #nav-main 这一个网格的成员，不必每次输入都搬运 DOM。 */
+#nav-main.nav-searching {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -8px;
+  margin-right: -8px;
+}
+#nav-main.nav-searching > .nav-page-title,
+#nav-main.nav-searching > .nav-results-bar,
+#nav-main.nav-searching > .nav-no-result {
+  flex: 0 0 100%;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+#nav-main.nav-searching .nav-section,
+#nav-main.nav-searching .nav-grid {
+  display: contents;
+}
+#nav-main.nav-searching .nav-section-title {
+  display: none;
+}
+
+/* ---------- 检索结果条 ---------- */
+.nav-results-bar {
+  margin: 0 0 16px;
+}
+.nav-results-count {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--nav-text-secondary);
+}
+.nav-results-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.nav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--nav-text-secondary);
+  background: var(--nav-card-bg);
+  border: 1px solid var(--nav-card-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+[data-theme="light"] .nav-chip {
+  border-color: rgba(16, 24, 40, 0.10);
+}
+.nav-chip:hover {
+  color: var(--nav-text-primary);
+  border-color: rgba(var(--nav-accent-rgb), 0.5);
+}
+.nav-chip.is-active {
+  color: #fff;
+  background: var(--nav-accent);
+  border-color: var(--nav-accent);
+  font-weight: 600;
+}
+[data-theme="dark"] .nav-chip.is-active {
+  color: #1a1200; /* 暗色下强调色偏亮，白字对比不足，改用深色字 */
+}
+.nav-chip-n {
+  font-size: 11.5px;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
 }
 .nav-no-result {
   padding: 60px 20px;
