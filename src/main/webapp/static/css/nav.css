@@ -35,13 +35,20 @@
   --nav-text-secondary: #6b7178;  /* 描述/次要文字/占位符 */
   --nav-heading: #222222;         /* 分区标题 */
 
-  /* 强调色与阴影 */
-  --nav-accent: #2f96e0;
-  --nav-accent-rgb: 47, 150, 224;
-  --nav-shadow-hover: rgba(0, 36, 100, 0.3); /* 对齐 .box2:hover 阴影 */
+  /* 强调色取自 logo2x.png 的主色（琥珀 #fdb427），压暗以满足白底对比度 */
+  --nav-accent: #e8930c;
+  --nav-accent-rgb: 232, 147, 12;
+  --nav-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --nav-shadow-hover: 0 8px 24px rgba(16, 24, 40, 0.10), 0 2px 6px rgba(16, 24, 40, 0.06);
+
+  /* 字体：原主题字体栈为 Arimo/Helvetica/Arial，不含任何中文字体，
+     中文只能靠浏览器兜底（Windows 上会掉到宋体）。此处补齐中文字体栈。 */
+  --nav-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+              "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
 
   /* 通用尺寸 */
-  --nav-radius: 4px;
+  --nav-radius: 12px;
+  --nav-icon-radius: 9px;
   --nav-transition: all 0.3s ease;
 }
 
@@ -63,14 +70,27 @@
   --nav-text-secondary: #a8adb7;
   --nav-heading: #f5f6f8;
 
-  --nav-accent: #4dabf5;
-  --nav-accent-rgb: 77, 171, 245;
-  --nav-shadow-hover: rgba(0, 0, 0, 0.55); /* 暗色下阴影改为纯黑而非偏蓝 */
+  /* 暗色下把琥珀提亮，保证在深色卡片上仍达 AA */
+  --nav-accent: #f5b544;
+  --nav-accent-rgb: 245, 181, 68;
+  --nav-shadow: none;                        /* 深色底上阴影不可见，改用描边区分层次 */
+  --nav-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 /* ========== 3. 变量落地：覆盖 app.css 既有选择器 ========== */
+/* 排版基线：原主题全站 13px / 行高 1.43，中文偏小偏挤，统一抬到 14px / 1.6 */
+body,
+.nav-search,
+button,
+input {
+  font-family: var(--nav-font);
+}
 body {
   background-color: var(--nav-bg);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 .page-container .main-content {
   background-color: var(--nav-bg);
@@ -80,20 +100,39 @@ body {
 .nav-card.box2,
 .xe-widget.xe-conversations.box2 {
   background-color: var(--nav-card-bg);
+  border-radius: var(--nav-radius);
+  /* 亮色下改用轻阴影分层，1px 实线描边在 #f9f9f9 底上显得脏 */
+  border-color: transparent;
+  box-shadow: var(--nav-shadow);
+  padding: 14px 16px;
+  min-height: 78px;
+  margin-top: 0;
+}
+[data-theme="dark"] .nav-card.box2,
+[data-theme="dark"] .xe-widget.xe-conversations.box2 {
   border-color: var(--nav-card-border);
 }
+
+/* 原 hover 位移 -6px 幅度过大，收到 -2px，并让描边转为品牌色 */
 .nav-card.box2:hover,
 .xe-widget.xe-conversations.box2:hover {
-  box-shadow: 0 26px 40px -24px var(--nav-shadow-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--nav-shadow-hover);
+  border-color: rgba(var(--nav-accent-rgb), 0.45);
 }
 .user-info-navbar {
   background-color: var(--nav-toolbar-bg);
   border-bottom-color: var(--nav-card-border);
 }
+/* 顶栏原高 76px，仅承载一个搜索框，收到 60px 让首屏多出一行内容 */
+.user-info-navbar {
+  min-height: 60px;
+}
 /* app.css 给顶栏按钮写死了 border-bottom:1px solid #fff，暗色下会显成一道亮边 */
 .user-info-navbar .user-info-menu > li > a {
   border-bottom-color: transparent;
   color: var(--nav-text-secondary);
+  padding: 20px 16px;
 }
 footer.main-footer {
   background-color: var(--nav-footer-bg);
@@ -102,15 +141,49 @@ footer.main-footer {
 .sidebar-menu {
   background: var(--nav-sidebar-bg);
 }
+/* 侧边栏：去掉条目间的 1px 分隔线（老式列表观感），改用间距 + 圆角块状选中态 */
+.sidebar-menu .main-menu {
+  padding-left: 14px;
+  padding-right: 14px;
+}
 .sidebar-menu .main-menu a {
   color: var(--nav-sidebar-link);
-  border-bottom-color: var(--nav-sidebar-border);
+  border-bottom: none;
+  padding: 9px 12px;
+  margin: 1px 0;
+  border-radius: 8px;
+  font-size: 13.5px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
+.sidebar-menu .main-menu a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+/* 侧边栏在亮/暗两种主题下都是深色面板，选中态固定用提亮版琥珀，
+   不跟随 --nav-accent（亮色主题下那个值是为白底压暗过的，放在这里仅 4.37:1） */
+.sidebar-menu .main-menu li.active > a {
+  background: rgba(245, 181, 68, 0.14);
+  color: #f5b544;
+  font-weight: 600;
+}
+.sidebar-menu .main-menu a > i {
+  color: inherit;
+  opacity: 0.75;
+}
+.sidebar-menu .logo-env {
+  border-bottom: none;
+}
+
 .xe-comment p {
   color: var(--nav-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.55;
 }
 .xe-user-name strong {
   color: var(--nav-heading);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 h1,
 h2 {
@@ -138,6 +211,14 @@ h2 {
 .nav-col {
   float: none;
   display: flex;
+  /* 栅格间距由 Bootstrap 的 15px 收到 8px，同屏多容纳一行卡片 */
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-bottom: 16px;
+}
+.nav-grid {
+  margin-left: -8px;
+  margin-right: -8px;
 }
 .nav-col > .nav-card {
   width: 100%;
@@ -167,7 +248,7 @@ h2 {
   display: flex;
   align-items: center;
   height: auto;
-  min-height: 86px; /* 由固定 height 改为最小高度，允许内容撑开 */
+  min-height: 78px; /* 由固定 height 改为最小高度，允许内容撑开 */
 }
 .nav-card .xe-comment-entry {
   display: flex;
@@ -175,18 +256,28 @@ h2 {
   width: 100%;
 }
 .nav-card .xe-user-img {
-  flex: 0 0 40px;
+  flex: 0 0 38px;
 }
-.nav-card-icon {
+/* 实测 206/207 张站点图标原图都是 120x120 正方形，模板上的 .img-circle
+   会把它们裁成圆形、削掉 logo 四角（Behance、Medium 这类方形标尤其明显），
+   故以更高特异性改回圆角矩形。 */
+.nav-card-icon,
+.nav-card-icon.img-circle {
   display: block;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   float: none;
   object-fit: contain;
+  border-radius: var(--nav-icon-radius);
   background: var(--nav-icon-bg);
-  padding: 4px;
+  padding: 3px;
   box-sizing: border-box;
+  box-shadow: inset 0 0 0 1px rgba(16, 24, 40, 0.06);
+}
+[data-theme="dark"] .nav-card-icon,
+[data-theme="dark"] .nav-card-icon.img-circle {
+  box-shadow: none;
 }
 .nav-card .xe-comment {
   flex: 1 1 auto;
@@ -237,11 +328,12 @@ h2 {
   pointer-events: none;
 }
 .nav-search {
-  width: 220px;
+  width: 260px;
   max-width: 50vw;
-  padding: 6px 30px;
+  padding: 7px 32px;
+  font-size: 13.5px;
   border: 1px solid var(--nav-card-border);
-  border-radius: 20px;
+  border-radius: 10px;
   background: var(--nav-input-bg);
   color: var(--nav-text-primary);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -302,23 +394,25 @@ h2 {
 /* ========== 7. 分区间距与标题 ========== */
 .nav-page-title {
   /* 父级 .main-content 已有 30px padding，此处不再额外左右缩进 */
-  margin: 0 0 22px;
-  font-size: 14px;
+  margin: 0 0 26px;
+  font-size: 13px;
   font-weight: 400;
   color: var(--nav-text-secondary);
 }
 .nav-section {
-  margin-bottom: 30px;
+  margin-bottom: 34px;
 }
 .nav-section-title {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0 0 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--nav-card-border);
-  font-size: 16px;
-  font-weight: 600;
+  /* 去掉贯穿全宽的下划线，层级改由字重与间距建立 */
+  padding-bottom: 0;
+  border-bottom: none;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--nav-heading);
 }
 .nav-section-title i {
