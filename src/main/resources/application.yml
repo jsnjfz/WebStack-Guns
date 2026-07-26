@@ -1,11 +1,23 @@
 server:
-  port: 8000
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${SERVER_PORT:8000}
+  servlet:
+    session:
+      persistent: false
+  compression:                    #开启响应压缩：app.css 799KB->78KB，app.js 303KB->95KB
+    enabled: true
+    mime-types: text/html,text/css,text/plain,text/xml,text/javascript,application/javascript,application/json,application/xml,image/svg+xml
+    min-response-size: 1024
 
 guns:
-  swagger-open: true              #是否开启swagger (true/false)
-  kaptcha-open: false             #是否开启登录时验证码 (true/false)
-  file-upload-path: c:/tmp     #文件上传目录(不配置的话为java.io.tmpdir目录)
-  spring-session-open: false      #是否开启spring session,如果是多机环境需要开启(true/false)
+  swagger-open: ${GUNS_SWAGGER_OPEN:false}              #是否开启swagger (true/false)
+  kaptcha-open: ${GUNS_KAPTCHA_OPEN:false}              #是否开启登录时验证码 (true/false)
+  file-upload-path: ${GUNS_FILE_UPLOAD_PATH:}            #文件上传目录(不配置的话为java.io.tmpdir目录)
+  spring-session-open: ${GUNS_SPRING_SESSION_OPEN:false} #是否开启spring session,如果是多机环境需要开启(true/false)
+  secure-cookie: ${GUNS_SECURE_COOKIE:false}             #HTTPS 部署必须设为 true
+  druid-monitor-open: ${GUNS_DRUID_MONITOR_OPEN:false}
+  jwt-secret: ${GUNS_JWT_SECRET:}
+  remember-me-cipher-key: ${GUNS_REMEMBER_ME_CIPHER_KEY:}
   session-invalidate-time: 1800     #session失效时间(只在单机环境下生效，多机环境在SpringSessionConfig类中配置) 单位：秒
   session-validation-interval: 900  #多久检测一次失效的session(只在单机环境下生效) 单位：秒
 
@@ -13,9 +25,13 @@ beetl:
   resource-auto-check: true       #热加载beetl模板，开发时候用
 
 spring:
+  main:
+    allow-circular-references: true
   profiles:
     active: @spring.active@
   mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
     static-path-pattern: /static/**
     view:
       prefix: /WEB-INF/view
@@ -26,11 +42,18 @@ spring:
       exclude: static/**,WEB-INF/view/**
   servlet:
     multipart:
-      max-request-size: 100MB
-      max-file-size: 100MB
+      max-request-size: 5MB
+      max-file-size: 5MB
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 1d           #静态资源浏览器缓存；资源名无内容哈希，故不宜设置过长
 
 mybatis-plus:
   typeAliasesPackage: com.jsnjfz.manage.modular.system.model
+  configuration:
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 log:
   path: manage-logs
@@ -38,12 +61,11 @@ log:
 ---
 
 spring:
-  profiles: local
+  config:
+    activate:
+      on-profile: local
   datasource:
-    url: jdbc:mysql://localhost/guns?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: root
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/guns?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
     filters: wall,mergeStat
-
-
-

@@ -15,10 +15,6 @@
  */
 package com.jsnjfz.manage.modular.system.controller;
 
-import com.jsnjfz.manage.modular.system.factory.UserFactory;
-import com.jsnjfz.manage.modular.system.model.User;
-import com.jsnjfz.manage.modular.system.service.IUserService;
-import com.jsnjfz.manage.modular.system.warpper.UserWarpper;
 import com.jsnjfz.manage.config.properties.GunsProperties;
 import com.jsnjfz.manage.core.common.annotion.BussinessLog;
 import com.jsnjfz.manage.core.common.annotion.Permission;
@@ -27,9 +23,11 @@ import com.jsnjfz.manage.core.common.constant.dictmap.UserDict;
 import com.jsnjfz.manage.core.common.constant.factory.ConstantFactory;
 import com.jsnjfz.manage.core.common.constant.state.ManagerStatus;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
+import com.jsnjfz.manage.core.common.exception.InvalidUploadException;
 import com.jsnjfz.manage.core.log.LogObjectHolder;
 import com.jsnjfz.manage.core.shiro.ShiroKit;
 import com.jsnjfz.manage.core.shiro.ShiroUser;
+import com.jsnjfz.manage.core.security.PasswordService;
 import com.jsnjfz.manage.modular.system.factory.UserFactory;
 import com.jsnjfz.manage.modular.system.model.User;
 import com.jsnjfz.manage.modular.system.service.IUserService;
@@ -50,10 +48,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.naming.NoPermissionException;
 import javax.validation.Valid;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.UUID;
 
 /**
@@ -65,6 +71,14 @@ import java.util.UUID;
 @Controller
 @RequestMapping("/mgr")
 public class UserMgrController extends BaseController {
+
+    private static final long MAX_IMAGE_BYTES = 5L * 1024 * 1024;
+    private static final long MAX_IMAGE_PIXELS = 16L * 1024 * 1024;
+    private static final Set<String> IMAGE_EXTENSIONS =
+            new HashSet<>(java.util.Arrays.asList("jpg", "jpeg", "png", "gif"));
+
+    @Autowired
+    private PasswordService passwordService;
 
     private static String PREFIX = "/system/user/";
 
@@ -160,10 +174,9 @@ public class UserMgrController extends BaseController {
         }
         Integer userId = ShiroKit.getUser().getId();
         User user = userService.selectById(userId);
-        String oldMd5 = ShiroKit.md5(oldPwd, user.getSalt());
-        if (user.getPassword().equals(oldMd5)) {
-            String newMd5 = ShiroKit.md5(newPwd, user.getSalt());
-            user.setPassword(newMd5);
+        if (passwordService.matches(oldPwd, user.getPassword(), user.getSalt())) {
+            user.setPassword(passwordService.encode(newPwd));
+            user.setSalt("");
             user.updateById();
             return SUCCESS_TIP;
         } else {
@@ -207,8 +220,8 @@ public class UserMgrController extends BaseController {
         }
 
         // 完善账号信息
-        user.setSalt(ShiroKit.getRandomSalt(5));
-        user.setPassword(ShiroKit.md5(user.getPassword(), user.getSalt()));
+        user.setSalt("");
+        user.setPassword(passwordService.encode(user.getPassword()));
         user.setStatus(ManagerStatus.OK.getCode());
         user.setCreatetime(new Date());
 
@@ -292,8 +305,8 @@ public class UserMgrController extends BaseController {
         }
         assertAuth(userId);
         User user = this.userService.selectById(userId);
-        user.setSalt(ShiroKit.getRandomSalt(5));
-        user.setPassword(ShiroKit.md5(Const.DEFAULT_PWD, user.getSalt()));
+        user.setSalt("");
+        user.setPassword(passwordService.encode(Const.DEFAULT_PWD));
         this.userService.updateById(user);
         return SUCCESS_TIP;
     }
@@ -360,13 +373,32 @@ public class UserMgrController extends BaseController {
     @RequestMapping(method = RequestMethod.POST, path = "/upload")
     @ResponseBody
     public String upload(@RequestPart("file") MultipartFile picture) {
-
-        String pictureName = UUID.randomUUID().toString() + "." + ToolUtil.getFileSuffix(picture.getOriginalFilename());
+        String originalFilename = picture.getOriginalFilename();
+        String suffix = originalFilename == null
+                ? "" : ToolUtil.getFileSuffix(originalFilename).toLowerCase(Locale.ROOT);
+        if (picture.isEmpty() || picture.getSize() > MAX_IMAGE_BYTES || !IMAGE_EXTENSIONS.contains(suffix)) {
+            throw new InvalidUploadException();
+        }
+        String outputFormat = "jpeg".equals(suffix) ? "jpg" : suffix;
+        String pictureName = UUID.randomUUID().toString() + "." + outputFormat;
         try {
-            String fileSavePath = gunsProperties.getFileUploadPath();
-            picture.transferTo(new File(fileSavePath + pictureName));
-        } catch (Exception e) {
-            throw new ServiceException(BizExceptionEnum.UPLOAD_ERROR);
+            BufferedImage image = ImageIO.read(picture.getInputStream());
+            if (image == null || image.getWidth() <= 0 || image.getHeight() <= 0
+                    || (long) image.getWidth() * image.getHeight() > MAX_IMAGE_PIXELS) {
+                throw new IOException("Invalid image");
+            }
+            Path uploadRoot = new File(gunsProperties.getFileUploadPath()).toPath()
+                    .toAbsolutePath().normalize();
+            Files.createDirectories(uploadRoot);
+            Path target = uploadRoot.resolve(pictureName).normalize();
+            if (!target.startsWith(uploadRoot)) {
+                throw new IOException("Invalid upload path");
+            }
+            if (!ImageIO.write(image, outputFormat, target.toFile())) {
+                throw new IOException("Unsupported image format");
+            }
+        } catch (IOException e) {
+            throw new InvalidUploadException();
         }
         return pictureName;
     }

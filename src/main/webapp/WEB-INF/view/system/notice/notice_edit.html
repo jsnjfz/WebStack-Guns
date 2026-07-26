@@ -4,14 +4,14 @@
         <div class="form-horizontal" id="noticeInfoForm">
 
             <input type="hidden" id="id" value="${notice.id}">
-            <input type="hidden" id="contentVal" value='${notice.content}'>
+            <textarea id="contentVal" style="display:none">${noticeContent}</textarea>
 
             <div class="row">
                 <div class="col-sm-12">
                     <div class="form-group">
                         <label class="col-sm-1 control-label">标题</label>
                         <div class="col-sm-11">
-                            <input class="form-control" id="title" name="title" type="text" value="${notice.title}">
+                            <input class="form-control" id="title" name="title" type="text" value="${noticeTitle}">
 
                         </div>
                     </div>

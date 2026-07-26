@@ -4,34 +4,34 @@
             <!-- logo -->
             <div class="logo">
                 <a href="/" class="logo-expanded">
-                    <img src="/static/img/logo2x.png" width="100%" alt="" />
+                    <img src="/static/img/logo2x.png" width="100%" alt="设计导航首页" />
                 </a>
                 <a href="/" class="logo-collapsed">
-                    <img src="/static/img/logo-collapsed2x.png" width="40" alt="" />
+                    <img src="/static/img/logo-collapsed2x.png" width="40" alt="设计导航首页" />
                 </a>
             </div>
             <div class="mobile-menu-toggle visible-xs">
-                <a href="#" data-toggle="user-info-menu">
-                    <i class="linecons-cog"></i>
+                <a href="#" data-toggle="user-info-menu" aria-label="更多操作">
+                    <i class="linecons-cog" aria-hidden="true"></i>
                 </a>
-                <a href="#" data-toggle="mobile-menu">
-                    <i class="fa-bars"></i>
+                <a href="#" data-toggle="mobile-menu" aria-label="展开分类菜单">
+                    <i class="fa-bars" aria-hidden="true"></i>
                 </a>
             </div>
         </header>
-        <ul id="main-menu" class="main-menu">
+        <ul id="main-menu" class="main-menu" role="navigation" aria-label="站点分类">
             @for(title in titles){
                 @if(tool.isEmpty(title.children)){
                 <li>
                     <a href="#${title.name}" class="smooth">
-                        <i class="fa fa-fw ${title.icon}"></i>
+                        <i class="fa fa-fw ${title.icon}" aria-hidden="true"></i>
                         <span class="title">${title.name}</span>
                     </a>
                 </li>
                 @}else{
                 <li>
                     <a>
-                        <i class="fa fa-fw ${title.icon}"></i>
+                        <i class="fa fa-fw ${title.icon}" aria-hidden="true"></i>
                         <span class="title">${title.name}</span>
                     </a>
                     <ul>
@@ -47,13 +47,13 @@
                 @}
             @}
 
-            <div class="submit-tag">
+            <li class="submit-tag">
                 <a href="/about">
-                    <i class="linecons-heart"></i>
+                    <i class="linecons-heart" aria-hidden="true"></i>
                     <span class="tooltip-blue">关于本站</span>
-                    <span class="label label-Primary pull-right hidden-collapsed">♥︎</span>
+                    <span class="label label-Primary pull-right hidden-collapsed">&hearts;</span>
                 </a>
-            </div>
+            </li>
         </ul>
     </div>
 </div>

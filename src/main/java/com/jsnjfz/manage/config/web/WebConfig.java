@@ -19,10 +19,10 @@ import com.jsnjfz.manage.config.properties.GunsProperties;
 import com.jsnjfz.manage.core.common.controller.GunsErrorView;
 import com.jsnjfz.manage.core.interceptor.RestApiInteceptor;
 import com.jsnjfz.manage.core.listener.ConfigListener;
-import com.jsnjfz.manage.config.properties.GunsProperties;
-import com.jsnjfz.manage.core.common.controller.GunsErrorView;
-import com.jsnjfz.manage.core.interceptor.RestApiInteceptor;
-import com.jsnjfz.manage.core.listener.ConfigListener;
+import com.jsnjfz.manage.core.util.JwtTokenUtil;
+import com.jsnjfz.manage.core.security.CsrfFilter;
+import com.jsnjfz.manage.core.security.SecurityHeadersFilter;
+import com.jsnjfz.manage.modular.system.dao.UserMapper;
 import cn.stylefeng.roses.core.xss.XssFilter;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.support.http.StatViewServlet;
@@ -40,6 +40,7 @@ import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.web.context.request.RequestContextListener;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -60,6 +61,12 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private GunsProperties gunsProperties;
 
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private UserMapper userMapper;
+
     /**
      * 增加swagger的支持
      */
@@ -76,7 +83,8 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new RestApiInteceptor()).addPathPatterns("/gunsApi/**");
+        registry.addInterceptor(new RestApiInteceptor(jwtTokenUtil, userMapper))
+                .addPathPatterns("/gunsApi/**");
     }
 
     /**
@@ -91,6 +99,8 @@ public class WebConfig implements WebMvcConfigurer {
      * druidServlet注册
      */
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            prefix = "guns", name = "druid-monitor-open", havingValue = "true")
     public ServletRegistrationBean druidServletRegistration() {
         ServletRegistrationBean registration = new ServletRegistrationBean(new StatViewServlet());
         registration.addUrlMappings("/druid/*");
@@ -101,6 +111,8 @@ public class WebConfig implements WebMvcConfigurer {
      * druid监控 配置URI拦截策略
      */
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            prefix = "guns", name = "druid-monitor-open", havingValue = "true")
     public FilterRegistrationBean druidStatFilter() {
         FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new WebStatFilter());
         //添加过滤规则.
@@ -117,11 +129,15 @@ public class WebConfig implements WebMvcConfigurer {
      * druid数据库连接池监控
      */
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            prefix = "guns", name = "druid-monitor-open", havingValue = "true")
     public DruidStatInterceptor druidStatInterceptor() {
         return new DruidStatInterceptor();
     }
 
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            prefix = "guns", name = "druid-monitor-open", havingValue = "true")
     public JdkRegexpMethodPointcut druidStatPointcut() {
         JdkRegexpMethodPointcut druidStatPointcut = new JdkRegexpMethodPointcut();
         String patterns = "com.jsnjfz.manage.modular.*.service.*";
@@ -134,6 +150,8 @@ public class WebConfig implements WebMvcConfigurer {
      * druid数据库连接池监控
      */
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            prefix = "guns", name = "druid-monitor-open", havingValue = "true")
     public BeanTypeAutoProxyCreator beanTypeAutoProxyCreator() {
         BeanTypeAutoProxyCreator beanTypeAutoProxyCreator = new BeanTypeAutoProxyCreator();
         beanTypeAutoProxyCreator.setTargetBeanType(DruidDataSource.class);
@@ -147,6 +165,8 @@ public class WebConfig implements WebMvcConfigurer {
      * @return
      */
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+            prefix = "guns", name = "druid-monitor-open", havingValue = "true")
     public Advisor druidStatAdvisor() {
         return new DefaultPointcutAdvisor(druidStatPointcut(), druidStatInterceptor());
     }
@@ -160,6 +180,25 @@ public class WebConfig implements WebMvcConfigurer {
         xssFilter.setUrlExclusion(Arrays.asList("/notice/update", "/notice/add"));
         FilterRegistrationBean registration = new FilterRegistrationBean(xssFilter);
         registration.addUrlPatterns("/*");
+        registration.setOrder(30);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<SecurityHeadersFilter> securityHeadersFilterRegistration() {
+        FilterRegistrationBean<SecurityHeadersFilter> registration =
+                new FilterRegistrationBean<>(new SecurityHeadersFilter());
+        registration.addUrlPatterns("/*");
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<CsrfFilter> csrfFilterRegistration() {
+        FilterRegistrationBean<CsrfFilter> registration =
+                new FilterRegistrationBean<>(new CsrfFilter(gunsProperties));
+        registration.addUrlPatterns("/*");
+        registration.setOrder(20);
         return registration;
     }
 

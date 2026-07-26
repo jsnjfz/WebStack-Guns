@@ -17,10 +17,10 @@ package com.jsnjfz.manage.core.interceptor;
 
 import com.jsnjfz.manage.core.common.constant.JwtConstants;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
+import com.jsnjfz.manage.core.common.constant.state.ManagerStatus;
 import com.jsnjfz.manage.core.util.JwtTokenUtil;
-import com.jsnjfz.manage.core.common.constant.JwtConstants;
-import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
-import com.jsnjfz.manage.core.util.JwtTokenUtil;
+import com.jsnjfz.manage.modular.system.dao.UserMapper;
+import com.jsnjfz.manage.modular.system.model.User;
 import cn.stylefeng.roses.core.reqres.response.ErrorResponseData;
 import cn.stylefeng.roses.core.util.RenderUtil;
 import io.jsonwebtoken.JwtException;
@@ -37,6 +37,14 @@ import javax.servlet.http.HttpServletResponse;
  * @Date 2018/7/20 23:11
  */
 public class RestApiInteceptor extends HandlerInterceptorAdapter {
+
+    private final JwtTokenUtil jwtTokenUtil;
+    private final UserMapper userMapper;
+
+    public RestApiInteceptor(JwtTokenUtil jwtTokenUtil, UserMapper userMapper) {
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.userMapper = userMapper;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -57,18 +65,30 @@ public class RestApiInteceptor extends HandlerInterceptorAdapter {
 
             //验证token是否过期,包含了验证jwt是否正确
             try {
-                boolean flag = JwtTokenUtil.isTokenExpired(authToken);
+                boolean flag = jwtTokenUtil.isTokenExpired(authToken);
                 if (flag) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     RenderUtil.renderJson(response, new ErrorResponseData(BizExceptionEnum.TOKEN_EXPIRED.getCode(), BizExceptionEnum.TOKEN_EXPIRED.getMessage()));
                     return false;
                 }
-            } catch (JwtException e) {
+                String userId = jwtTokenUtil.getUsernameFromToken(authToken);
+                User user = userMapper.selectById(Integer.valueOf(userId));
+                if (user == null || user.getStatus() == null
+                        || user.getStatus() != ManagerStatus.OK.getCode()) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    RenderUtil.renderJson(response, new ErrorResponseData(
+                            BizExceptionEnum.TOKEN_ERROR.getCode(), BizExceptionEnum.TOKEN_ERROR.getMessage()));
+                    return false;
+                }
+            } catch (JwtException | IllegalArgumentException e) {
                 //有异常就是token解析失败
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 RenderUtil.renderJson(response, new ErrorResponseData(BizExceptionEnum.TOKEN_ERROR.getCode(), BizExceptionEnum.TOKEN_ERROR.getMessage()));
                 return false;
             }
         } else {
             //header没有带Bearer字段
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             RenderUtil.renderJson(response, new ErrorResponseData(BizExceptionEnum.TOKEN_ERROR.getCode(), BizExceptionEnum.TOKEN_ERROR.getMessage()));
             return false;
         }

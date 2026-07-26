@@ -6,43 +6,58 @@
 
 
 <body class="page-body">
-    <!-- skin-white -->
+    <a class="nav-skip-link" href="#nav-main">跳到主内容</a>
+
     <div class="page-container">
 
         @include("/common/_sidebar.html"){}
 
         <div class="main-content">
             <nav class="navbar user-info-navbar" role="navigation">
-                <!-- User Info, Notifications and Menu Bar -->
-                <!-- Left links for user info navbar -->
                 <ul class="user-info-menu left-links list-inline list-unstyled">
                     <li class="hidden-sm hidden-xs">
-                        <a href="#" data-toggle="sidebar">
-                            <i class="fa-bars"></i>
+                        <a href="#" data-toggle="sidebar" aria-label="收起或展开侧边栏">
+                            <i class="fa-bars" aria-hidden="true"></i>
                         </a>
                     </li>
                 </ul>
 
-            <a href="https://github.com/jsnjfz/WebStack-Guns" target="_blank"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+                <div class="nav-toolbar">
+                    <div class="nav-search-wrap">
+                        <i class="fa fa-search nav-search-icon" aria-hidden="true"></i>
+                        <label class="sr-only" for="nav-search">搜索站点</label>
+                        <input id="nav-search" class="nav-search" type="search"
+                               placeholder="搜索站点，按 / 快速聚焦" autocomplete="off">
+                        <button id="nav-search-clear" class="nav-search-clear" type="button"
+                                aria-label="清空搜索" hidden>&times;</button>
+                    </div>
+                    <button id="nav-theme-toggle" class="nav-theme-toggle" type="button"
+                            aria-label="切换深色模式">
+                        <i class="fa fa-moon-o" aria-hidden="true"></i>
+                    </button>
+                    <a class="nav-github-link" href="https://github.com/jsnjfz/WebStack-Guns"
+                       target="_blank" rel="noopener noreferrer" aria-label="在 GitHub 上查看本项目">
+                        <img src="/static/img/github.png" width="22" height="22" alt="" aria-hidden="true">
+                    </a>
+                </div>
             </nav>
 
-            @include("/common/_content.html"){}
+            <div id="nav-main">
+                <h1 class="nav-page-title">设计导航 · 精选设计资源与在线工具</h1>
+
+                @include("/common/_content.html"){}
+            </div>
 
             <!-- Main Footer -->
-            <!-- Choose between footer styles: "footer-type-1" or "footer-type-2" -->
-            <!-- Add class "sticky" to  always stick the footer to the end of page (if page contents is small) -->
-            <!-- Or class "fixed" to  always fix the footer to the end of page -->
             <footer class="main-footer sticky footer-type-1">
                 <div class="footer-inner">
-                    <!-- Add your copyright text here -->
                     <div class="footer-text">
-                        &copy; 2019
-                        <a href="/"><strong>WebStack</strong></a> design by <a href="https://github.com/jsnjfz" target="_blank"><strong>jsnjfz</strong></a>
+                        &copy; <span id="nav-year">2019</span>
+                        <a href="/"><strong>WebStack</strong></a> design by <a href="https://github.com/jsnjfz" target="_blank" rel="noopener noreferrer"><strong>jsnjfz</strong></a>
                     </div>
-                    <!-- Go to Top Link, just add rel="go-top" to any link to add this functionality -->
                     <div class="go-up">
-                        <a href="#" rel="go-top">
-                            <i class="fa-angle-up"></i>
+                        <a href="#" rel="go-top" aria-label="回到顶部">
+                            <i class="fa-angle-up" aria-hidden="true"></i>
                         </a>
                     </div>
                 </div>
@@ -50,8 +65,11 @@
         </div>
     </div>
 
-
+    <!-- 主题脚本（含 jQuery）放在底部，避免阻塞首屏渲染 -->
+    <script src="/static/js/app.js"></script>
     <script type="text/javascript">
+    // 侧边栏子菜单展开/收起的主题兼容处理。
+    // 平滑滚动、滚动高亮、死锚点清理已统一由 /static/js/nav.js 接管。
     $(document).ready(function() {
         $(document).on('click', '.has-sub', function(){
             var _this = $(this)
@@ -78,35 +96,6 @@
                 $('.has-sub.expanded > ul').show()
             }
         })
-        $("#main-menu li ul li").click(function() {
-            $(this).siblings('li').removeClass('active'); // 删除其他兄弟元素的样式
-            $(this).addClass('active'); // 添加当前元素的样式
-        });
-        $("a.smooth").click(function(ev) {
-            ev.preventDefault();
-
-            public_vars.$mainMenu.add(public_vars.$sidebarProfile).toggleClass('mobile-is-visible');
-            ps_destroy();
-            $("html, body").animate({
-                scrollTop: $($(this).attr("href")).offset().top - 30
-            }, {
-                duration: 500,
-                easing: "swing"
-            });
-        });
-        return false;
-    });
-
-    var href = "";
-    var pos = 0;
-    $("a.smooth").click(function(e) {
-        $("#main-menu li").each(function() {
-            $(this).removeClass("active");
-        });
-        $(this).parent("li").addClass("active");
-        e.preventDefault();
-        href = $(this).attr("href");
-        pos = $(href).position().top - 30;
     });
     </script>
 

@@ -15,7 +15,6 @@
  */
 package com.jsnjfz.manage.modular.system.controller;
 
-import cn.stylefeng.roses.core.util.FileUtil;
 import com.google.code.kaptcha.Constants;
 import com.google.code.kaptcha.Producer;
 import com.jsnjfz.manage.config.properties.GunsProperties;
@@ -30,7 +29,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * 验证码生成
@@ -41,6 +45,9 @@ import java.io.IOException;
 @Controller
 @RequestMapping("/kaptcha")
 public class KaptchaController {
+
+    private static final Pattern PICTURE_NAME = Pattern.compile(
+            "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.(jpg|png|gif)$");
 
     @Autowired
     private GunsProperties gunsProperties;
@@ -113,16 +120,25 @@ public class KaptchaController {
      */
     @RequestMapping("/{pictureId}")
     public void renderPicture(@PathVariable("pictureId") String pictureId, HttpServletResponse response) {
-        String path = gunsProperties.getFileUploadPath() + pictureId;
+        if (pictureId == null || !PICTURE_NAME.matcher(pictureId).matches()) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         try {
-            byte[] bytes = FileUtil.toByteArray(path);
-            response.getOutputStream().write(bytes);
+            Path root = new File(gunsProperties.getFileUploadPath()).toPath().toAbsolutePath().normalize();
+            Path picture = root.resolve(pictureId).normalize();
+            if (!picture.startsWith(root) || !Files.isRegularFile(picture)) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+            String suffix = pictureId.substring(pictureId.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+            response.setContentType("jpg".equals(suffix) ? "image/jpeg" : "image/" + suffix);
+            response.setHeader("X-Content-Type-Options", "nosniff");
+            response.setHeader("Cache-Control", "private, max-age=86400");
+            Files.copy(picture, response.getOutputStream());
         } catch (Exception e) {
-            //如果找不到图片就返回一个默认图片
-            try {
-                response.sendRedirect("/static/img/github.png");
-            } catch (IOException e1) {
-                e1.printStackTrace();
+            if (!response.isCommitted()) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
         }
     }

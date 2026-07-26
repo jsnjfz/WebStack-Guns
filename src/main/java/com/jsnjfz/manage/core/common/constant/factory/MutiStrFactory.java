@@ -72,7 +72,7 @@ public class MutiStrFactory {
             return new ArrayList<>();
         } else {
             ArrayList<Map<String, String>> results = new ArrayList<>();
-            String[] items = StrUtil.split(StrUtil.removeSuffix(mutiString, ITEM_SPLIT), ITEM_SPLIT);
+            List<String> items = StrUtil.split(StrUtil.removeSuffix(mutiString, ITEM_SPLIT), ITEM_SPLIT);
             for (String item : items) {
                 String[] attrs = item.split(ATTR_SPLIT);
                 HashMap<String, String> itemMap = new HashMap<>();

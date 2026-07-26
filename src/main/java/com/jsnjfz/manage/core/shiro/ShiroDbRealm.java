@@ -15,8 +15,8 @@
  */
 package com.jsnjfz.manage.core.shiro;
 
-import com.jsnjfz.manage.core.shiro.service.UserAuthService;
-import com.jsnjfz.manage.modular.system.model.User;
+import com.jsnjfz.manage.core.security.PasswordCredentialsMatcher;
+import com.jsnjfz.manage.core.security.PasswordService;
 import com.jsnjfz.manage.core.shiro.service.UserAuthService;
 import com.jsnjfz.manage.core.shiro.service.impl.UserAuthServiceServiceImpl;
 import com.jsnjfz.manage.modular.system.model.User;
@@ -25,8 +25,6 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.credential.CredentialsMatcher;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -38,6 +36,13 @@ import java.util.Set;
 
 public class ShiroDbRealm extends AuthorizingRealm {
 
+    private final PasswordService passwordService;
+
+    public ShiroDbRealm(PasswordService passwordService) {
+        this.passwordService = passwordService;
+        super.setCredentialsMatcher(new PasswordCredentialsMatcher(passwordService));
+    }
+
     /**
      * 登录认证
      */
@@ -47,6 +52,10 @@ public class ShiroDbRealm extends AuthorizingRealm {
         UserAuthService shiroFactory = UserAuthServiceServiceImpl.me();
         UsernamePasswordToken token = (UsernamePasswordToken) authcToken;
         User user = shiroFactory.user(token.getUsername());
+        if (user == null) {
+            passwordService.burnTime(new String(token.getPassword()));
+            return null;
+        }
         ShiroUser shiroUser = shiroFactory.shiroUser(user);
         return shiroFactory.info(shiroUser, user, super.getName());
     }
@@ -82,14 +91,4 @@ public class ShiroDbRealm extends AuthorizingRealm {
         return info;
     }
 
-    /**
-     * 设置认证加密方式
-     */
-    @Override
-    public void setCredentialsMatcher(CredentialsMatcher credentialsMatcher) {
-        HashedCredentialsMatcher md5CredentialsMatcher = new HashedCredentialsMatcher();
-        md5CredentialsMatcher.setHashAlgorithmName(ShiroKit.hashAlgorithmName);
-        md5CredentialsMatcher.setHashIterations(ShiroKit.hashIterations);
-        super.setCredentialsMatcher(md5CredentialsMatcher);
-    }
 }

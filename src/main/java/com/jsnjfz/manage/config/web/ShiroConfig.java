@@ -17,13 +17,10 @@ package com.jsnjfz.manage.config.web;
 
 import com.jsnjfz.manage.config.properties.GunsProperties;
 import com.jsnjfz.manage.core.interceptor.GunsUserFilter;
-import com.jsnjfz.manage.core.shiro.ShiroDbRealm;
-import com.jsnjfz.manage.config.properties.GunsProperties;
-import com.jsnjfz.manage.core.interceptor.GunsUserFilter;
+import com.jsnjfz.manage.core.security.PasswordService;
 import com.jsnjfz.manage.core.shiro.ShiroDbRealm;
 import org.apache.shiro.cache.CacheManager;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
-import org.apache.shiro.codec.Base64;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
@@ -40,11 +37,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.Filter;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.security.SecureRandom;
 
 /**
  * shiro权限管理的配置
@@ -55,13 +55,18 @@ import java.util.Map;
 @Configuration
 public class ShiroConfig {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShiroConfig.class);
+
     /**
      * 安全管理器
      */
     @Bean
-    public DefaultWebSecurityManager securityManager(CookieRememberMeManager rememberMeManager, CacheManager cacheShiroManager, SessionManager sessionManager) {
+    public DefaultWebSecurityManager securityManager(CookieRememberMeManager rememberMeManager,
+                                                     CacheManager cacheShiroManager,
+                                                     SessionManager sessionManager,
+                                                     ShiroDbRealm shiroDbRealm) {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-        securityManager.setRealm(this.shiroDbRealm());
+        securityManager.setRealm(shiroDbRealm);
         securityManager.setCacheManager(cacheShiroManager);
         securityManager.setRememberMeManager(rememberMeManager);
         securityManager.setSessionManager(sessionManager);
@@ -92,6 +97,8 @@ public class ShiroConfig {
         Cookie cookie = new SimpleCookie(ShiroHttpSession.DEFAULT_SESSION_ID_NAME);
         cookie.setName("shiroCookie");
         cookie.setHttpOnly(true);
+        cookie.setSecure(gunsProperties.getSecureCookie());
+        cookie.setSameSite(Cookie.SameSiteOptions.LAX);
         sessionManager.setSessionIdCookie(cookie);
         return sessionManager;
     }
@@ -110,28 +117,50 @@ public class ShiroConfig {
      * 项目自定义的Realm
      */
     @Bean
-    public ShiroDbRealm shiroDbRealm() {
-        return new ShiroDbRealm();
+    public ShiroDbRealm shiroDbRealm(PasswordService passwordService) {
+        return new ShiroDbRealm(passwordService);
     }
 
     /**
      * rememberMe管理器, cipherKey生成见{@code Base64Test.java}
      */
     @Bean
-    public CookieRememberMeManager rememberMeManager(SimpleCookie rememberMeCookie) {
+    public CookieRememberMeManager rememberMeManager(SimpleCookie rememberMeCookie,
+                                                     GunsProperties gunsProperties) {
         CookieRememberMeManager manager = new CookieRememberMeManager();
-        manager.setCipherKey(Base64.decode("Z3VucwAAAAAAAAAAAAAAAA=="));
+        manager.setCipherKey(resolveRememberMeKey(gunsProperties.getRememberMeCipherKey()));
         manager.setCookie(rememberMeCookie);
         return manager;
+    }
+
+    private byte[] resolveRememberMeKey(String configuredKey) {
+        byte[] key;
+        if (configuredKey == null || configuredKey.trim().isEmpty()) {
+            key = new byte[16];
+            new SecureRandom().nextBytes(key);
+            LOGGER.warn("未配置 guns.remember-me-cipher-key，本次启动已生成临时 rememberMe 密钥");
+        } else {
+            try {
+                key = java.util.Base64.getDecoder().decode(configuredKey.trim());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("guns.remember-me-cipher-key 必须是 Base64 字符串", e);
+            }
+        }
+        if (key.length != 16 && key.length != 24 && key.length != 32) {
+            throw new IllegalArgumentException("guns.remember-me-cipher-key 解码后必须是 16、24 或 32 字节");
+        }
+        return key;
     }
 
     /**
      * 记住密码Cookie
      */
     @Bean
-    public SimpleCookie rememberMeCookie() {
+    public SimpleCookie rememberMeCookie(GunsProperties gunsProperties) {
         SimpleCookie simpleCookie = new SimpleCookie("rememberMe");
         simpleCookie.setHttpOnly(true);
+        simpleCookie.setSecure(gunsProperties.getSecureCookie());
+        simpleCookie.setSameSite(Cookie.SameSiteOptions.LAX);
         simpleCookie.setMaxAge(7 * 24 * 60 * 60);//7天
         return simpleCookie;
     }

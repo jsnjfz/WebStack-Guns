@@ -30,6 +30,7 @@
 
         <div class="middle-box">
             <form class="m-t" role="form" action="${ctxPath}/login" method="post">
+                <input type="hidden" name="_csrf" value="${csrfToken!}">
                 <div class="form-group">
                     <input type="text" name="username" class="form-control" placeholder="用户名" required="">
                 </div>

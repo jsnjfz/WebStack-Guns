@@ -15,13 +15,23 @@
  */
 package com.jsnjfz.manage.core.util;
 
+import com.jsnjfz.manage.config.properties.GunsProperties;
 import com.jsnjfz.manage.core.common.constant.JwtConstants;
-import cn.stylefeng.roses.core.util.ToolUtil;
 import io.jsonwebtoken.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * <p>jwt token工具类</p>
@@ -39,58 +49,89 @@ import java.util.Map;
  * @author fengshuonan
  * @Date 2017/8/25 10:59
  */
+@Component
 public class JwtTokenUtil {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtTokenUtil.class);
+
+    private static final int MIN_SECRET_BYTES = 64;
+
+    private final SecretKey signingKey;
+
+    public JwtTokenUtil(GunsProperties gunsProperties) {
+        this.signingKey = createSigningKey(gunsProperties.getJwtSecret());
+    }
+
+    private SecretKey createSigningKey(String configuredSecret) {
+        byte[] keyBytes;
+        if (configuredSecret == null || configuredSecret.trim().isEmpty()) {
+            keyBytes = new byte[MIN_SECRET_BYTES];
+            new SecureRandom().nextBytes(keyBytes);
+            LOGGER.warn("未配置 guns.jwt-secret，本次启动已生成临时 JWT 密钥；应用重启后旧 token 将失效");
+        } else {
+            try {
+                keyBytes = Base64.getDecoder().decode(configuredSecret.trim());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("guns.jwt-secret 必须是 Base64 字符串", e);
+            }
+            if (keyBytes.length < MIN_SECRET_BYTES) {
+                throw new IllegalArgumentException("guns.jwt-secret 解码后至少需要 64 字节");
+            }
+        }
+        return new SecretKeySpec(keyBytes, "HmacSHA512");
+    }
 
     /**
      * 获取用户名从token中
      */
-    public static String getUsernameFromToken(String token) {
+    public String getUsernameFromToken(String token) {
         return getClaimFromToken(token).getSubject();
     }
 
     /**
      * 获取jwt发布时间
      */
-    public static Date getIssuedAtDateFromToken(String token) {
+    public Date getIssuedAtDateFromToken(String token) {
         return getClaimFromToken(token).getIssuedAt();
     }
 
     /**
      * 获取jwt失效时间
      */
-    public static Date getExpirationDateFromToken(String token) {
+    public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token).getExpiration();
     }
 
     /**
      * 获取jwt接收者
      */
-    public static String getAudienceFromToken(String token) {
+    public Set<String> getAudienceFromToken(String token) {
         return getClaimFromToken(token).getAudience();
     }
 
     /**
      * 获取私有的jwt claim
      */
-    public static String getPrivateClaimFromToken(String token, String key) {
+    public String getPrivateClaimFromToken(String token, String key) {
         return getClaimFromToken(token).get(key).toString();
     }
 
     /**
      * 获取jwt的payload部分
      */
-    public static Claims getClaimFromToken(String token) {
+    public Claims getClaimFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(JwtConstants.SECRET)
-                .parseClaimsJws(token)
-                .getBody();
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     /**
      * 解析token是否正确,不正确会报异常<br>
      */
-    public static void parseToken(String token) throws JwtException {
-        Jwts.parser().setSigningKey(JwtConstants.SECRET).parseClaimsJws(token).getBody();
+    public void parseToken(String token) throws JwtException {
+        Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token);
     }
 
     /**
@@ -99,7 +140,7 @@ public class JwtTokenUtil {
      *  true:过期   false:没过期
      * </pre>
      */
-    public static Boolean isTokenExpired(String token) {
+    public Boolean isTokenExpired(String token) {
         try {
             final Date expiration = getExpirationDateFromToken(token);
             return expiration.before(new Date());
@@ -111,7 +152,7 @@ public class JwtTokenUtil {
     /**
      * 生成token(通过用户名和签名时候用的随机数)
      */
-    public static String generateToken(String userId) {
+    public String generateToken(String userId) {
         Map<String, Object> claims = new HashMap<>();
         return doGenerateToken(claims, userId);
     }
@@ -119,7 +160,7 @@ public class JwtTokenUtil {
     /**
      * 生成token
      */
-    private static String doGenerateToken(Map<String, Object> claims, String subject) {
+    private String doGenerateToken(Map<String, Object> claims, String subject) {
         final Date createdDate = new Date();
         final Date expirationDate = new Date(createdDate.getTime() + JwtConstants.EXPIRATION * 1000);
 
@@ -128,14 +169,8 @@ public class JwtTokenUtil {
                 .setSubject(subject)
                 .setIssuedAt(createdDate)
                 .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS512, JwtConstants.SECRET)
+                .setId(UUID.randomUUID().toString())
+                .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
-    }
-
-    /**
-     * 获取混淆MD5签名用的随机字符串
-     */
-    public static String getRandomKey() {
-        return ToolUtil.getRandomString(6);
     }
 }

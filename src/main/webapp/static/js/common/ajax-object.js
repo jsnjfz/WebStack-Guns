@@ -1,4 +1,20 @@
 (function () {
+	var readCookie = function (name) {
+		var prefix = name + "=";
+		var parts = document.cookie ? document.cookie.split(";") : [];
+		for (var i = 0; i < parts.length; i++) {
+			var part = parts[i].replace(/^\s+/, "");
+			if (part.indexOf(prefix) === 0) {
+				return decodeURIComponent(part.substring(prefix.length));
+			}
+		}
+		return "";
+	};
+
+	window.getCsrfToken = function () {
+		return readCookie("XSRF-TOKEN");
+	};
+
 	var $ax = function (url, success, error) {
 		this.url = url;
 		this.type = "post";
@@ -25,8 +41,11 @@
 		        dataType: this.dataType,
 		        async: this.async,
 		        data: this.data,
-				beforeSend: function(data) {
-					
+				beforeSend: function(xhr) {
+					var token = window.getCsrfToken();
+					if (token) {
+						xhr.setRequestHeader("X-CSRF-TOKEN", token);
+					}
 				},
 		        success: function(data) {
 		        	me.success(data);

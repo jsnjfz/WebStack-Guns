@@ -16,6 +16,7 @@
 package com.jsnjfz.manage;
 
 import cn.stylefeng.roses.core.config.WebAutoConfiguration;
+import cn.stylefeng.roses.core.config.MybaitsPlusAutoConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -27,7 +28,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author stylefeng
  * @Date 2017/5/21 12:06
  */
-@SpringBootApplication(exclude = WebAutoConfiguration.class)
+@SpringBootApplication(exclude = {WebAutoConfiguration.class, MybaitsPlusAutoConfiguration.class})
 public class WebstackGunsApplication {
 
     private final static Logger logger = LoggerFactory.getLogger(WebstackGunsApplication.class);
