@@ -21,6 +21,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- 静态资源版本号用，默认格式含空格与时区，不能直接放进 URL -->
+        <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
         <java.version>1.8</java.version>
         <spring-framework.version>5.3.39</spring-framework.version>
         <tomcat.version>9.0.120</tomcat.version>

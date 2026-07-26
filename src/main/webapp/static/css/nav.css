@@ -15,30 +15,31 @@
 
 /* ========== 1. 主题变量：亮色（默认） ========== */
 :root {
-  /* 页面与容器底色 */
-  --nav-bg: #f9f9f9;              /* 对齐 app.css body 背景 */
-  --nav-card-bg: #ffffff;         /* 对齐 .box2 背景 */
-  --nav-card-border: #e4ecf3;     /* 对齐 .box2 边框 */
-  --nav-toolbar-bg: #ffffff;      /* 对齐 .user-info-navbar 背景 */
-  --nav-footer-bg: #ffffff;       /* 页脚底色 */
+  /* 页面与容器底色：三层色阶——画布最深、侧栏与顶栏居中、卡片纯白。
+     此前侧栏和卡片同为纯白、画布仅 #f9f9f9，整屏一片白既刺眼又没有层次。 */
+  --nav-bg: #eef1f5;              /* 画布（内容区底） */
+  --nav-card-bg: #ffffff;         /* 卡片：保持纯白以浮于画布之上 */
+  --nav-card-border: #dfe3e8;     /* 描边（chip / 输入框等），随画布压深同步加深 */
+  --nav-toolbar-bg: #f7f8fa;      /* 顶栏与侧栏同属"外壳"，用同一中间调 */
+  --nav-footer-bg: #f7f8fa;       /* 页脚底色 */
   /* 侧边栏改为浅色：深色侧栏 + 浅色内容是后台管理模板的典型范式
      （本项目前身即 Guns 后台），统一成浅色后整体更像一个内容站 */
-  --nav-sidebar-bg: #ffffff;
-  --nav-sidebar-link: #6b7178;
+  --nav-sidebar-bg: #f7f8fa;
+  --nav-sidebar-link: #666c73;
   --nav-sidebar-border: rgba(16, 24, 40, 0.09);
   --nav-sidebar-hover-bg: rgba(16, 24, 40, 0.05);
   --nav-sidebar-hover-fg: #222222;
-  --nav-sidebar-active-bg: rgba(232, 147, 12, 0.13);
+  --nav-sidebar-active-bg: rgba(232, 147, 12, 0.15);
   --nav-sidebar-active-fg: #8a5800; /* 浅底上需更深的琥珀才够对比度 */
-  --nav-input-bg: #f5f6f8;        /* 搜索框底色 */
+  --nav-input-bg: #ffffff;        /* 搜索框：在中间调顶栏上用白底反而更清晰 */
   --nav-icon-bg: #ffffff;         /* 站点图标圆形底，防止透明 PNG 糊掉 */
 
   /* 文字色阶 */
   --nav-text-primary: #333333;    /* 正文/卡片标题 */
-  /* 原主题此处为 #999，在白底卡片上仅 2.85:1，低于 WCAG AA 的 4.5:1；
-     卡片描述是首页主要正文，故下调明度至 4.6:1，观感仍保持次要文字的克制 */
-  /* 取值需同时满足白色卡片(#fff)和页面底色(#f9f9f9)两种背景：4.93:1 / 4.68:1 */
-  --nav-text-secondary: #6b7178;  /* 描述/次要文字/占位符 */
+  /* 原主题此处为 #999，在白底卡片上仅 2.85:1，低于 WCAG AA 的 4.5:1。
+     取值需同时满足卡片(#fff)与画布(#eef1f5)两种背景；画布压深后
+     #6b7178 在其上降到 4.37:1，故再暗一档至 #666c73：5.31:1 / 4.68:1 */
+  --nav-text-secondary: #666c73;  /* 描述/次要文字/占位符 */
   --nav-heading: #222222;         /* 分区标题 */
 
   /* 强调色取自 logo2x.png 的主色（琥珀 #fdb427），压暗以满足白底对比度 */

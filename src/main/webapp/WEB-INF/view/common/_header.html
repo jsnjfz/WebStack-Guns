@@ -25,10 +25,13 @@
         })();
     </script>
 
-    <link rel="stylesheet" href="/static/css/app.css">
+    <!-- ?v= 为构建时间戳（application.yml 的 app.asset-version，由 Maven 注入）。
+         静态资源带 1 天 Cache-Control 且文件名无内容哈希，没有这个版本号的话
+         发版后浏览器会继续用缓存里的旧 css/js。 -->
+    <link rel="stylesheet" href="/static/css/app.css?v=${env('app.asset-version','dev')}">
     <!-- 前台导航页样式覆盖层，必须排在 app.css 之后 -->
-    <link rel="stylesheet" href="/static/css/nav.css">
+    <link rel="stylesheet" href="/static/css/nav.css?v=${env('app.asset-version','dev')}">
 
     <!-- 搜索/主题/平滑滚动，纯原生 JS，defer 不阻塞渲染 -->
-    <script src="/static/js/nav.js" defer></script>
+    <script src="/static/js/nav.js?v=${env('app.asset-version','dev')}" defer></script>
 </head>

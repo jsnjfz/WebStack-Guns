@@ -66,7 +66,7 @@
     </div>
 
     <!-- 主题脚本（含 jQuery）放在底部，避免阻塞首屏渲染 -->
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=${env('app.asset-version','dev')}"></script>
     <script type="text/javascript">
     // 侧边栏子菜单展开/收起的主题兼容处理。
     // 平滑滚动、滚动高亮、死锚点清理已统一由 /static/js/nav.js 接管。

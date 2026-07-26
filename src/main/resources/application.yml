@@ -21,6 +21,11 @@ guns:
   session-invalidate-time: 1800     #session失效时间(只在单机环境下生效，多机环境在SpringSessionConfig类中配置) 单位：秒
   session-validation-interval: 900  #多久检测一次失效的session(只在单机环境下生效) 单位：秒
 
+#静态资源版本号，随每次构建变化。前台模板以 ?v=… 附加在 css/js 上，
+#使浏览器在发版后立即取到新文件，而不必等 Cache-Control 的 max-age 过期。
+app:
+  asset-version: @maven.build.timestamp@
+
 beetl:
   resource-auto-check: true       #热加载beetl模板，开发时候用
 
