@@ -455,11 +455,11 @@
 
   /* ===================== 7. 站点图标兜底 ===================== */
   // 图标优先走 /static/tmp/（随仓库发布、可缓存、无重定向），取不到再退回
-  // /kaptcha/（后台新上传的图只在上传目录里），最后退到本地占位图。
+  // /kaptcha/（后台新上传的图只在上传目录里），最后退到本地 AI 占位图。
   // 放在 JS 里而不是每个 <img> 内联 onerror：196 张卡片可省下约 17KB HTML。
   var ICON_STATIC = '/static/tmp/';
   var ICON_UPLOAD = '/kaptcha/';
-  var ICON_PLACEHOLDER = '/static/img/github.png';
+  var ICON_PLACEHOLDER = '/static/tmp/ai-tool.svg';
 
   function nextIconSrc(img) {
     var src = img.getAttribute('src') || '';

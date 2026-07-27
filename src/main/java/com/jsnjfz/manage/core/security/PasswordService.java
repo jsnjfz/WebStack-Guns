@@ -1,6 +1,5 @@
 package com.jsnjfz.manage.core.security;
 
-import com.jsnjfz.manage.core.shiro.ShiroKit;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKeyFactory;
@@ -42,7 +41,7 @@ public class PasswordService {
         }
         if (!isModern(encodedPassword)) {
             return legacySalt != null && MessageDigest.isEqual(
-                    ShiroKit.md5(rawPassword, legacySalt).getBytes(StandardCharsets.US_ASCII),
+                    legacyHash(rawPassword, legacySalt).getBytes(StandardCharsets.US_ASCII),
                     encodedPassword.getBytes(StandardCharsets.US_ASCII));
         }
         try {
@@ -101,6 +100,32 @@ public class PasswordService {
         } finally {
             spec.clearPassword();
         }
+    }
+
+    private String legacyHash(String rawPassword, String legacySalt) {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] saltDigest = md5.digest(legacySalt.getBytes(StandardCharsets.UTF_8));
+            md5.update(saltDigest);
+            byte[] hash = md5.digest(rawPassword.getBytes(StandardCharsets.UTF_8));
+            for (int i = 1; i < 1024; i++) {
+                hash = md5.digest(hash);
+            }
+            return toHex(hash);
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("当前 JDK 不支持旧密码迁移所需的 MD5", e);
+        }
+    }
+
+    private String toHex(byte[] bytes) {
+        char[] hex = new char[bytes.length * 2];
+        char[] digits = "0123456789abcdef".toCharArray();
+        for (int i = 0; i < bytes.length; i++) {
+            int value = bytes[i] & 0xff;
+            hex[i * 2] = digits[value >>> 4];
+            hex[i * 2 + 1] = digits[value & 0x0f];
+        }
+        return new String(hex);
     }
 
     private void validatePassword(String rawPassword) {

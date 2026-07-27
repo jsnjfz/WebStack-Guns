@@ -2,13 +2,14 @@
 
 ## 兼容边界
 
-本项目必须运行在 JDK 8，因此采用 Spring Boot 2.7.18、Spring Framework 5.3.39 和 Apache Shiro 1.13.0。Shiro 2.x 需要 Java 11，Spring Framework 6.x 需要 Java 17，不能在当前约束下直接升级。
+本项目使用 JDK 17、Spring Boot 2.7.18、Spring Framework 5.3.39 和 Apache Shiro 2.2.1。Spring Boot 2.x 仍基于 `javax.servlet`；Apache 官方迁移指南要求此类应用使用 Shiro 2.x，Shiro 3.x 仅支持 Jakarta 命名空间和 Spring Boot 4，不能在不迁移整个 Web 技术栈的情况下直接替换。
 
-2026-07-26 使用 OSV `querybatch` 对 Maven 完整依赖树复扫：
+2026-07-27 使用 OSV `querybatch` 对 Maven 完整依赖树复扫：
 
 - 升级前：41 个受影响组件、208 个唯一公告。
-- 升级后：11 个受影响组件、22 个唯一公告（其中 1 个组件/1 个公告仅在 test scope）。
-- Tomcat 9.0.120、Jackson 2.18.9、MySQL Connector 8.4.0、Log4j 2.25.5、Druid 1.2.28、Fastjson `1.2.83_noneautotype` 等本轮升级目标未再命中 OSV。
+- JDK 8 安全加固后：11 个受影响组件、22 个唯一公告。
+- 本次 JDK 17 / Shiro 2.2.1 升级后：155 个解析依赖中，8 个受影响组件、17 个唯一公告（其中 1 个组件/1 个公告仅在 test scope）。
+- Shiro 各模块、Tomcat 9.0.120、Jackson 2.18.9、MySQL Connector 8.4.0、Log4j 2.25.5、Druid 1.2.28、Fastjson `1.2.83_noneautotype` 未命中 OSV。
 
 扫描仍会按版本命中下列公告。它们没有被静默忽略，处置依据如下。
 
@@ -27,18 +28,17 @@
 | Spring MVC `GHSA-w3c8-7r8f-9jp8` | 没有 `@RequestBody byte[]` 控制器参数。 |
 | Spring MVC `GHSA-wg35-8jpf-2xv3` | 未启用 Spring resource chain 和 encoded-resource resolver 缓存组合。 |
 | Spring Core `GHSA-jmp9-x22r-554x` | 未使用 Spring Security `@EnableMethodSecurity`；授权由 Shiro 和项目注解完成。 |
-| Shiro `GHSA-c4qc-4q9p-m9q9` | 不存在账号也执行同成本 PBKDF2；单实例按 IP+账号限制 5 次失败/5 分钟。 |
-| Shiro `GHSA-fcvm-3cpj-f9qx` | 登录前注销旧认证 Session，成功后创建新 Session；HTTP 验收确认 Shiro 认证 Session ID 已轮换。 |
-| Shiro `GHSA-x96m-rh44-vgv8` | 未使用 `DefaultLdapRealm`，项目使用数据库 Realm。 |
-| Shiro `GHSA-c244-p6m5-vqj6` | 静态资源本来就是公开内容，没有依赖 Shiro 对静态文件做细粒度保护。 |
-| Shiro `GHSA-c6r4-qjmw-cvj2` | Session/rememberMe Cookie 已设置 HttpOnly、SameSite；HTTPS 部署必须配置 `GUNS_SECURE_COOKIE=true`。 |
 | Beetl `GHSA-m69h-4frq-vwq7` | 公告详情针对 Beetl 3.15 的动态 `render`；项目使用固定 classpath 模板，不接受用户模板源码。通知富文本另经 OWASP 白名单净化。 |
 | AssertJ `GHSA-rqfh-9r24-8c9r` | 仅 test scope，项目测试未调用不可信 XML 的 `isXmlEqualTo` / `xmlPrettyFormat`。 |
+
+Apache 官方仍注明 CVE-2026-56130 会影响开启 rememberMe 的 Shiro 2.x。本项目已删除 rememberMe 管理器、Cookie、密钥配置和登录选项，并显式将 `RememberMeManager` 设为 `null`；自定义 Web 过滤器也只接受 `Subject.isAuthenticated()`，不再解析或信任客户端 rememberMe Cookie。CVE-2026-56091 只影响 `shiro-guice` Web 集成，本项目依赖树不包含该模块。
 
 ## 已实施的应用层保护
 
 - 旧 MD5 口令成功登录后迁移到 PBKDF2-HMAC-SHA256（210,000 次迭代、随机盐）。
-- JWT 和 rememberMe 固定公开密钥已移除；生产环境通过环境变量提供随机密钥。
+- JWT 固定公开密钥已移除；生产环境通过环境变量提供随机密钥。
+- Shiro rememberMe 已完全关闭，历史客户端 Cookie 不再参与身份恢复或反序列化。
+- 旧数据权限插件对 JDK Proxy 内部字段的反射访问已替换为公开 API 解包，无需通过 `--add-opens` 放宽 JDK 17 模块边界。
 - REST token 每次请求检查签名、过期时间以及用户当前是否仍存在且启用。
 - CSRF token 覆盖后台写请求；旧的可变更 GET 路径也纳入校验。
 - 通知富文本使用 OWASP HTML Sanitizer 白名单，编辑页输出使用 OWASP Encoder。
@@ -46,4 +46,4 @@
 - Swagger 和 Druid 监控默认关闭；服务默认只监听 `127.0.0.1`。
 - 浏览器响应包含 CSP、frame、MIME sniffing、referrer 和 permissions 安全头。
 
-移除 JDK 8 约束后，应优先升级到仍在公开支持期的 Spring 和 Shiro 主版本，并重新执行完整依赖扫描与运行验收。
+后续若迁移到 Jakarta / Spring Boot 4，应同步升级到 Shiro 3.x，并重新执行完整依赖扫描与登录、会话、授权运行验收。

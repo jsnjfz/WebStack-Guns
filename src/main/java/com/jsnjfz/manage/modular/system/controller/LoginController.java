@@ -115,7 +115,6 @@ public class LoginController extends BaseController {
 
         String username = super.getPara("username").trim();
         String password = super.getPara("password").trim();
-        String remember = super.getPara("remember");
         String remoteAddress = request.getRemoteAddr();
         if (!loginAttemptService.isAllowed(remoteAddress, username)) {
             throw new ExcessiveAttemptsException("登录失败次数过多，请稍后再试");
@@ -132,12 +131,7 @@ public class LoginController extends BaseController {
 
         Subject currentUser = ShiroKit.getSubject();
         UsernamePasswordToken token = new UsernamePasswordToken(username, password.toCharArray());
-
-        if ("on".equals(remember)) {
-            token.setRememberMe(true);
-        } else {
-            token.setRememberMe(false);
-        }
+        token.setRememberMe(false);
 
         Session existingSession = currentUser.getSession(false);
         if (existingSession != null) {

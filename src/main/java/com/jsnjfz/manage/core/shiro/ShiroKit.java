@@ -19,11 +19,8 @@ import com.jsnjfz.manage.core.common.constant.Const;
 import com.jsnjfz.manage.core.common.constant.factory.ConstantFactory;
 import cn.stylefeng.roses.core.util.ToolUtil;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.crypto.hash.Md5Hash;
-import org.apache.shiro.crypto.hash.SimpleHash;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
-import org.apache.shiro.util.ByteSource;
 
 import java.util.List;
 
@@ -35,28 +32,6 @@ import java.util.List;
 public class ShiroKit {
 
     private static final String NAMES_DELIMETER = ",";
-
-    /**
-     * 加盐参数
-     */
-    public final static String hashAlgorithmName = "MD5";
-
-    /**
-     * 循环次数
-     */
-    public final static int hashIterations = 1024;
-
-    /**
-     * shiro密码加密工具类
-     *
-     * @param credentials 密码
-     * @param saltSource  密码盐
-     * @return
-     */
-    public static String md5(String credentials, String saltSource) {
-        ByteSource salt = new Md5Hash(saltSource);
-        return new SimpleHash(hashAlgorithmName, credentials, salt, hashIterations).toString();
-    }
 
     /**
      * 获取随机盐值
@@ -207,7 +182,7 @@ public class ShiroKit {
     }
 
     /**
-     * 已认证通过的用户。不包含已记住的用户，这是与user标签的区别所在。与notAuthenticated搭配使用
+     * 已认证通过的用户。与notAuthenticated搭配使用。
      *
      * @return 通过身份验证：true，否则false
      */
@@ -216,7 +191,7 @@ public class ShiroKit {
     }
 
     /**
-     * 未认证通过用户，与authenticated标签相对应。与guest标签的区别是，该标签包含已记住用户。。
+     * 未认证通过用户，与authenticated标签相对应。
      *
      * @return 没有通过身份验证：true，否则false
      */
@@ -225,16 +200,16 @@ public class ShiroKit {
     }
 
     /**
-     * 认证通过或已记住的用户。与guset搭配使用。
+     * 已认证通过的用户。rememberMe 已禁用。
      *
      * @return 用户：true，否则 false
      */
     public static boolean isUser() {
-        return getSubject() != null && getSubject().getPrincipal() != null;
+        return isAuthenticated();
     }
 
     /**
-     * 验证当前用户是否为“访客”，即未认证（包含未记住）的用户。用user搭配使用
+     * 验证当前用户是否为访客，即当前 Session 尚未完成认证。
      *
      * @return 访客：true，否则false
      */

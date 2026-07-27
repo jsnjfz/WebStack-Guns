@@ -29,9 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Filter that allows access to resources if the accessor is a known user, which is defined as
- * having a known principal.  This means that any user who is authenticated or remembered via a
- * 'remember me' feature will be allowed access from this filter.
+ * Filter that allows access only when the current subject has completed authentication.
  * <p/>
  * If the accessor is not a known user, then they will be redirected to the {@link #setLoginUrl(String) loginUrl}</p>
  *
@@ -43,20 +41,19 @@ public class GunsUserFilter extends AccessControlFilter {
      * Returns <code>true</code> if the request is a
      * {@link #isLoginRequest(javax.servlet.ServletRequest, javax.servlet.ServletResponse) loginRequest} or
      * if the current {@link #getSubject(javax.servlet.ServletRequest, javax.servlet.ServletResponse) subject}
-     * is not <code>null</code>, <code>false</code> otherwise.
+     * is authenticated, <code>false</code> otherwise.
      *
      * @return <code>true</code> if the request is a
      * {@link #isLoginRequest(javax.servlet.ServletRequest, javax.servlet.ServletResponse) loginRequest} or
      * if the current {@link #getSubject(javax.servlet.ServletRequest, javax.servlet.ServletResponse) subject}
-     * is not <code>null</code>, <code>false</code> otherwise.
+     * is authenticated, <code>false</code> otherwise.
      */
     protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
         if (isLoginRequest(request, response)) {
             return true;
         } else {
             Subject subject = getSubject(request, response);
-            // If principal is not null, then the user is known and should be allowed access.
-            return subject.getPrincipal() != null;
+            return subject.isAuthenticated();
         }
     }
 

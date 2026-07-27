@@ -4,6 +4,8 @@
 *.idea
 target/
 logs/
+backups/
+server.txt
 
 # Log file
 *.log

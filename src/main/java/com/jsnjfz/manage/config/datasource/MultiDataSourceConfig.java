@@ -17,12 +17,12 @@ package com.jsnjfz.manage.config.datasource;
 
 import cn.stylefeng.roses.core.config.properties.DruidProperties;
 import cn.stylefeng.roses.core.config.properties.MutiDataSourceProperties;
-import cn.stylefeng.roses.core.datascope.DataScopeInterceptor;
 import cn.stylefeng.roses.core.mutidatasource.DynamicDataSource;
 import cn.stylefeng.roses.core.mutidatasource.aop.MultiSourceExAop;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.baomidou.mybatisplus.plugins.OptimisticLockerInterceptor;
 import com.baomidou.mybatisplus.plugins.PaginationInterceptor;
+import com.jsnjfz.manage.core.datascope.Jdk17DataScopeInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -129,8 +129,8 @@ public class MultiDataSourceConfig {
      * 数据范围mybatis插件
      */
     @Bean
-    public DataScopeInterceptor dataScopeInterceptor() {
-        return new DataScopeInterceptor();
+    public Jdk17DataScopeInterceptor dataScopeInterceptor() {
+        return new Jdk17DataScopeInterceptor();
     }
 
     /**

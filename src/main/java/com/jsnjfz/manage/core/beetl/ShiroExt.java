@@ -128,7 +128,7 @@ public class ShiroExt {
     }
 
     /**
-     * 已认证通过的用户。不包含已记住的用户，这是与user标签的区别所在。与notAuthenticated搭配使用
+     * 已认证通过的用户。与notAuthenticated搭配使用。
      *
      * @return 通过身份验证：true，否则false
      */
@@ -137,7 +137,7 @@ public class ShiroExt {
     }
 
     /**
-     * 未认证通过用户，与authenticated标签相对应。与guest标签的区别是，该标签包含已记住用户。。
+     * 未认证通过用户，与authenticated标签相对应。
      *
      * @return 没有通过身份验证：true，否则false
      */
@@ -146,16 +146,16 @@ public class ShiroExt {
     }
 
     /**
-     * 认证通过或已记住的用户。与guset搭配使用。
+     * 已认证通过的用户。rememberMe 已禁用。
      *
      * @return 用户：true，否则 false
      */
     public boolean isUser() {
-        return getSubject() != null && getSubject().getPrincipal() != null;
+        return authenticated();
     }
 
     /**
-     * 验证当前用户是否为“访客”，即未认证（包含未记住）的用户。用user搭配使用
+     * 验证当前用户是否为访客，即当前 Session 尚未完成认证。
      *
      * @return 访客：true，否则false
      */

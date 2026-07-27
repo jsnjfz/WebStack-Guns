@@ -10,18 +10,18 @@
 
 运行环境：
 
-- JDK 8（本项目会持续用 JDK 8 编译和运行）
+- JDK 17
 - Maven 3.9+
 - MySQL 8.x
 
-先确认实际使用的是 JDK 8：
+先确认实际使用的是 JDK 17：
 
 ```shell
 java -version
 mvn -version
 ```
 
-构建已配置 Maven Enforcer，使用 JDK 9 或更高版本会直接失败，避免误把高版本 API 编译进项目。
+构建已配置 Maven Enforcer，使用非 JDK 17 会直接失败，避免构建产物与生产运行时不一致。
 
 在本机 MySQL 中创建数据库并导入初始化数据：
 
@@ -29,7 +29,11 @@ mvn -version
 mysql -h127.0.0.1 -P3306 -u你的账号 -p \
   -e "CREATE DATABASE IF NOT EXISTS guns CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
 mysql -h127.0.0.1 -P3306 -u你的账号 -p guns < sql/guns.sql
+mysql -h127.0.0.1 -P3306 -u你的账号 -p guns < sql/ai-navigation.sql
 ```
+
+AI 导航的 96 个站点图标随项目保存在
+`src/main/webapp/static/tmp/ai-site-001.png` 至 `ai-site-096.png`，首页加载时不依赖外部图标服务。
 
 如果是从旧版数据库升级，只需执行一次：
 
@@ -51,11 +55,10 @@ java -jar target/Webstack-Guns-1.0.jar
 
 启动完成后访问：<http://127.0.0.1:8000>
 
-本地未配置以下密钥时，应用会在每次启动时生成临时随机密钥；正式部署应显式配置，否则重启后旧 JWT 和 rememberMe Cookie 会失效：
+本地未配置 JWT 密钥时，应用会在每次启动时生成临时随机密钥；正式部署应显式配置，否则重启后旧 JWT 会失效：
 
 ```shell
 export GUNS_JWT_SECRET="$(openssl rand -base64 64)"
-export GUNS_REMEMBER_ME_CIPHER_KEY="$(openssl rand -base64 16)"
 ```
 
 其他可选配置：
@@ -99,7 +102,7 @@ export GUNS_REMEMBER_ME_CIPHER_KEY="$(openssl rand -base64 16)"
 
 ## 声明
 
-项目受 JDK 8 约束，采用 Spring Boot 2.7.x / Spring Framework 5.3.x / Shiro 1.13.x 的兼容线，并在应用层补充了登录限速、会话轮换、安全 Cookie、CSRF、富文本净化、上传校验和安全响应头。外网部署仍应放在 HTTPS 反向代理之后，并在网关层增加统一限速和访问日志告警。
+项目采用 JDK 17、Spring Boot 2.7.x / Spring Framework 5.3.x 和 Shiro 2.2.x。由于 Spring Boot 2.x 仍使用 `javax.servlet`，尚不能直接使用仅支持 Jakarta 的 Shiro 3.x；项目已彻底关闭 Shiro rememberMe，并补充登录限速、会话轮换、安全 Cookie、CSRF、富文本净化、上传校验和安全响应头。外网部署仍应放在 HTTPS 反向代理之后，并在网关层增加统一限速和访问日志告警。
 
 ## License
 

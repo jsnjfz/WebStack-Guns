@@ -25,7 +25,6 @@ import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
-import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.Cookie;
 import org.apache.shiro.web.servlet.ShiroHttpSession;
@@ -37,14 +36,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.ehcache.EhCacheManagerFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.servlet.Filter;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.security.SecureRandom;
 
 /**
  * shiro权限管理的配置
@@ -55,20 +51,18 @@ import java.security.SecureRandom;
 @Configuration
 public class ShiroConfig {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ShiroConfig.class);
-
     /**
      * 安全管理器
      */
     @Bean
-    public DefaultWebSecurityManager securityManager(CookieRememberMeManager rememberMeManager,
-                                                     CacheManager cacheShiroManager,
+    public DefaultWebSecurityManager securityManager(CacheManager cacheShiroManager,
                                                      SessionManager sessionManager,
                                                      ShiroDbRealm shiroDbRealm) {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
         securityManager.setRealm(shiroDbRealm);
         securityManager.setCacheManager(cacheShiroManager);
-        securityManager.setRememberMeManager(rememberMeManager);
+        // 禁止解析客户端 rememberMe Cookie，消除历史反序列化攻击面。
+        securityManager.setRememberMeManager(null);
         securityManager.setSessionManager(sessionManager);
         return securityManager;
     }
@@ -122,50 +116,6 @@ public class ShiroConfig {
     }
 
     /**
-     * rememberMe管理器, cipherKey生成见{@code Base64Test.java}
-     */
-    @Bean
-    public CookieRememberMeManager rememberMeManager(SimpleCookie rememberMeCookie,
-                                                     GunsProperties gunsProperties) {
-        CookieRememberMeManager manager = new CookieRememberMeManager();
-        manager.setCipherKey(resolveRememberMeKey(gunsProperties.getRememberMeCipherKey()));
-        manager.setCookie(rememberMeCookie);
-        return manager;
-    }
-
-    private byte[] resolveRememberMeKey(String configuredKey) {
-        byte[] key;
-        if (configuredKey == null || configuredKey.trim().isEmpty()) {
-            key = new byte[16];
-            new SecureRandom().nextBytes(key);
-            LOGGER.warn("未配置 guns.remember-me-cipher-key，本次启动已生成临时 rememberMe 密钥");
-        } else {
-            try {
-                key = java.util.Base64.getDecoder().decode(configuredKey.trim());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("guns.remember-me-cipher-key 必须是 Base64 字符串", e);
-            }
-        }
-        if (key.length != 16 && key.length != 24 && key.length != 32) {
-            throw new IllegalArgumentException("guns.remember-me-cipher-key 解码后必须是 16、24 或 32 字节");
-        }
-        return key;
-    }
-
-    /**
-     * 记住密码Cookie
-     */
-    @Bean
-    public SimpleCookie rememberMeCookie(GunsProperties gunsProperties) {
-        SimpleCookie simpleCookie = new SimpleCookie("rememberMe");
-        simpleCookie.setHttpOnly(true);
-        simpleCookie.setSecure(gunsProperties.getSecureCookie());
-        simpleCookie.setSameSite(Cookie.SameSiteOptions.LAX);
-        simpleCookie.setMaxAge(7 * 24 * 60 * 60);//7天
-        return simpleCookie;
-    }
-
-    /**
      * Shiro的过滤器链
      */
     @Bean
@@ -197,9 +147,7 @@ public class ShiroConfig {
          *
          * anon  不需要认证
          * authc 需要认证
-         * user  验证通过或RememberMe登录的都可以
-         *
-         * 当应用开启了rememberMe时,用户下次访问时可以是一个user,但不会是authc,因为authc是需要重新认证的
+         * user  项目自定义认证过滤器，仅允许当前 Session 已完成认证的用户
          *
          * 顺序从上到下,优先级依次降低
          *

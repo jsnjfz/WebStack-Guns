@@ -51,8 +51,6 @@ public class GunsProperties {
 
     private String jwtSecret;
 
-    private String rememberMeCipherKey;
-
     /**
      * session 失效时间（默认为30分钟 单位：秒）
      */
@@ -149,11 +147,4 @@ public class GunsProperties {
         this.jwtSecret = jwtSecret;
     }
 
-    public String getRememberMeCipherKey() {
-        return rememberMeCipherKey;
-    }
-
-    public void setRememberMeCipherKey(String rememberMeCipherKey) {
-        this.rememberMeCipherKey = rememberMeCipherKey;
-    }
 }

@@ -23,13 +23,13 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- 静态资源版本号用，默认格式含空格与时区，不能直接放进 URL -->
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <spring-framework.version>5.3.39</spring-framework.version>
         <tomcat.version>9.0.120</tomcat.version>
         <jackson-bom.version>2.18.9</jackson-bom.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <log4j2.version>2.25.5</log4j2.version>
-        <shiro.version>1.13.0</shiro.version>
+        <shiro.version>2.2.1</shiro.version>
         <kaptcha.version>2.3.3</kaptcha.version>
         <ehcache.version>2.10.9.2</ehcache.version>
         <beetl.version>2.9.10</beetl.version>
@@ -50,7 +50,7 @@
         <json-path.version>2.9.0</json-path.version>
         <xmlunit2.version>2.11.0</xmlunit2.version>
         <html-sanitizer.version>20260313.1</html-sanitizer.version>
-        <owasp-encoder.version>1.3.1</owasp-encoder.version>
+        <owasp-encoder.version>1.4.0</owasp-encoder.version>
     </properties>
 
     <dependencyManagement>
@@ -344,15 +344,15 @@
                 <version>3.6.3</version>
                 <executions>
                     <execution>
-                        <id>enforce-jdk-8</id>
+                        <id>enforce-jdk-17</id>
                         <goals>
                             <goal>enforce</goal>
                         </goals>
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>[1.8,1.9)</version>
-                                    <message>本项目必须使用 JDK 8 构建。</message>
+                                    <version>[17,18)</version>
+                                    <message>本项目必须使用 JDK 17 构建。</message>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
@@ -362,10 +362,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.14.1</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
             <plugin>
