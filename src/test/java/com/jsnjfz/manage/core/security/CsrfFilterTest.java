@@ -7,9 +7,13 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.servlet.http.Cookie;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CsrfFilterTest {
 
@@ -38,5 +42,25 @@ class CsrfFilterTest {
         MockHttpServletResponse acceptedResponse = new MockHttpServletResponse();
         filter.doFilter(accepted, acceptedResponse, new MockFilterChain());
         assertEquals(200, acceptedResponse.getStatus());
+    }
+
+    @Test
+    void adminAjaxAddsCsrfHeaderOnlyToSameOriginRequests() throws IOException {
+        String script = classpathText("/static/js/common/ajax-object.js");
+        String container = classpathText("/WEB-INF/view/common/_container.html");
+
+        assertTrue(script.contains("ajaxSend.gunsCsrf"));
+        assertTrue(script.contains("target.protocol === window.location.protocol"));
+        assertTrue(script.contains("target.host === window.location.host"));
+        assertTrue(script.contains("xhr.setRequestHeader(\"X-CSRF-TOKEN\", token)"));
+        assertTrue(container.contains(
+                "ajax-object.js?v=${env('app.asset-version','dev')}"));
+    }
+
+    private String classpathText(String path) throws IOException {
+        try (InputStream input = getClass().getResourceAsStream(path)) {
+            assertNotNull(input);
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 }

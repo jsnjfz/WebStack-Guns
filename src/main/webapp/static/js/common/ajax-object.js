@@ -15,6 +15,21 @@
 		return readCookie("XSRF-TOKEN");
 	};
 
+	var isSameOrigin = function (url) {
+		var target = document.createElement("a");
+		target.href = url || window.location.href;
+		return target.protocol === window.location.protocol
+			&& target.host === window.location.host;
+	};
+
+	// Bootstrap Table、Tree Table 等组件会直接调用 $.ajax，统一为同源请求补上 CSRF 请求头。
+	$(document).off("ajaxSend.gunsCsrf").on("ajaxSend.gunsCsrf", function (event, xhr, settings) {
+		var token = window.getCsrfToken();
+		if (token && isSameOrigin(settings.url)) {
+			xhr.setRequestHeader("X-CSRF-TOKEN", token);
+		}
+	});
+
 	var $ax = function (url, success, error) {
 		this.url = url;
 		this.type = "post";
