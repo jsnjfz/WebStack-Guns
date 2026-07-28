@@ -2,6 +2,7 @@ package com.jsnjfz.manage.core.security;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RuntimeDependencySurfaceTest {
@@ -22,5 +23,13 @@ class RuntimeDependencySurfaceTest {
                 Class.forName("okhttp3.OkHttpClient", false, classLoader));
         assertThrows(ClassNotFoundException.class, () ->
                 Class.forName("com.google.gson.Gson", false, classLoader));
+    }
+
+    @Test
+    void providesDruidRuntimeDependency() {
+        ClassLoader classLoader = getClass().getClassLoader();
+
+        assertDoesNotThrow(() ->
+                Class.forName("org.apache.commons.lang3.tuple.Pair", false, classLoader));
     }
 }

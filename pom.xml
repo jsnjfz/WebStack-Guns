@@ -147,6 +147,12 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>${mysql.version}</version>
         </dependency>
+        <!-- Druid 1.2.28 在运行时引用 Pair，但其 POM 未声明 commons-lang3。 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
         <!--spring boot依赖-->
         <dependency>
