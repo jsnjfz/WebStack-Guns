@@ -5,6 +5,8 @@ import cn.stylefeng.roses.core.base.warpper.BaseControllerWrapper;
 import cn.stylefeng.roses.core.util.ToolUtil;
 import cn.stylefeng.roses.kernel.model.exception.ServiceException;
 import com.baomidou.mybatisplus.plugins.Page;
+import com.jsnjfz.manage.core.common.annotion.Permission;
+import com.jsnjfz.manage.core.common.constant.Const;
 import com.jsnjfz.manage.core.common.constant.factory.PageFactory;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
 import com.jsnjfz.manage.core.common.node.ZTreeNode;
@@ -100,6 +102,7 @@ public class SiteController extends BaseController {
      * 新增网站
      */
     @RequestMapping(value = "/add")
+    @Permission(Const.ADMIN_NAME)
     @ResponseBody
     public Object add(Site site) {
         siteService.saveOrUpdate(site,"");
@@ -111,6 +114,7 @@ public class SiteController extends BaseController {
      * 修改网站
      */
     @RequestMapping(value = "/update")
+    @Permission(Const.ADMIN_NAME)
     @ResponseBody
     public Object update(Site site) {
         if (ToolUtil.isEmpty(site) || site.getId() == null) {
@@ -124,6 +128,7 @@ public class SiteController extends BaseController {
      * 删除网站
      */
     @RequestMapping(value = "/delete")
+    @Permission(Const.ADMIN_NAME)
     @ResponseBody
     public Object delete(@RequestParam Integer id) {
         siteService.delete(id);

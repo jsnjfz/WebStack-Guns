@@ -24,11 +24,6 @@ package com.jsnjfz.manage.core.common.constant;
 public interface Const {
 
     /**
-     * 系统默认的管理员密码
-     */
-    String DEFAULT_PWD = "111111";
-
-    /**
      * 管理员角色的名字
      */
     String ADMIN_NAME = "administrator";

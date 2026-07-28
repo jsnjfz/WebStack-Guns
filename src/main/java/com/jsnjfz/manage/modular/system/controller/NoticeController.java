@@ -19,6 +19,7 @@ import cn.stylefeng.roses.core.base.controller.BaseController;
 import cn.stylefeng.roses.core.util.ToolUtil;
 import cn.stylefeng.roses.kernel.model.exception.ServiceException;
 import com.jsnjfz.manage.core.common.annotion.BussinessLog;
+import com.jsnjfz.manage.core.common.annotion.Permission;
 import com.jsnjfz.manage.core.common.constant.dictmap.NoticeMap;
 import com.jsnjfz.manage.core.common.constant.factory.ConstantFactory;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
@@ -117,6 +118,7 @@ public class NoticeController extends BaseController {
      * 新增通知
      */
     @RequestMapping(value = "/add")
+    @Permission
     @ResponseBody
     @BussinessLog(value = "新增通知", key = "title", dict = NoticeMap.class)
     public Object add(Notice notice) {
@@ -134,6 +136,7 @@ public class NoticeController extends BaseController {
      * 删除通知
      */
     @RequestMapping(value = "/delete")
+    @Permission
     @ResponseBody
     @BussinessLog(value = "删除通知", key = "noticeId", dict = NoticeMap.class)
     public Object delete(@RequestParam Integer noticeId) {
@@ -150,6 +153,7 @@ public class NoticeController extends BaseController {
      * 修改通知
      */
     @RequestMapping(value = "/update")
+    @Permission
     @ResponseBody
     @BussinessLog(value = "修改通知", key = "title", dict = NoticeMap.class)
     public Object update(Notice notice) {

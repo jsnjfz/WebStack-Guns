@@ -18,6 +18,7 @@ package com.jsnjfz.manage.core.aop;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
 import com.jsnjfz.manage.core.common.exception.InvalidKaptchaException;
 import com.jsnjfz.manage.core.common.exception.InvalidUploadException;
+import com.jsnjfz.manage.core.common.exception.UploadRateLimitException;
 import com.jsnjfz.manage.core.log.LogManager;
 import com.jsnjfz.manage.core.log.factory.LogTaskFactory;
 import com.jsnjfz.manage.core.shiro.ShiroKit;
@@ -73,6 +74,13 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ErrorResponseData invalidUpload(InvalidUploadException e) {
         return new ErrorResponseData(BizExceptionEnum.UPLOAD_ERROR.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(UploadRateLimitException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    @ResponseBody
+    public ErrorResponseData uploadRateLimit(UploadRateLimitException e) {
+        return new ErrorResponseData(HttpStatus.TOO_MANY_REQUESTS.value(), e.getMessage());
     }
 
     /**

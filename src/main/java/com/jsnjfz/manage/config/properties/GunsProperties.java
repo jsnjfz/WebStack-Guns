@@ -51,6 +51,8 @@ public class GunsProperties {
 
     private String jwtSecret;
 
+    private String bootstrapAdminPassword;
+
     /**
      * session 失效时间（默认为30分钟 单位：秒）
      */
@@ -145,6 +147,14 @@ public class GunsProperties {
 
     public void setJwtSecret(String jwtSecret) {
         this.jwtSecret = jwtSecret;
+    }
+
+    public String getBootstrapAdminPassword() {
+        return bootstrapAdminPassword;
+    }
+
+    public void setBootstrapAdminPassword(String bootstrapAdminPassword) {
+        this.bootstrapAdminPassword = bootstrapAdminPassword;
     }
 
 }

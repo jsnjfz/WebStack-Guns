@@ -21,6 +21,15 @@ public class PasswordService {
     private static final int SALT_BYTES = 16;
     private static final int HASH_BITS = 256;
     private static final int MAX_PASSWORD_LENGTH = 1024;
+    private static final int MIN_NEW_PASSWORD_LENGTH = 12;
+    private static final int MAX_NEW_PASSWORD_LENGTH = 128;
+    private static final int TEMPORARY_PASSWORD_LENGTH = 20;
+    private static final char[] UPPERCASE = "ABCDEFGHJKLMNPQRSTUVWXYZ".toCharArray();
+    private static final char[] LOWERCASE = "abcdefghijkmnopqrstuvwxyz".toCharArray();
+    private static final char[] DIGITS = "23456789".toCharArray();
+    private static final char[] SYMBOLS = "!@#$%*-_=+".toCharArray();
+    private static final char[] TEMPORARY_PASSWORD_ALPHABET =
+            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%*-_=+".toCharArray();
 
     private final SecureRandom secureRandom = new SecureRandom();
     private final String dummyHash = encode("timing-mitigation-only");
@@ -33,6 +42,36 @@ public class PasswordService {
         return PREFIX + "$" + ITERATIONS + "$"
                 + Base64.getEncoder().withoutPadding().encodeToString(salt) + "$"
                 + Base64.getEncoder().withoutPadding().encodeToString(hash);
+    }
+
+    /**
+     * 生成只在重置响应中返回一次的随机临时密码。
+     */
+    public String generateTemporaryPassword() {
+        char[] password = new char[TEMPORARY_PASSWORD_LENGTH];
+        password[0] = randomCharacter(UPPERCASE);
+        password[1] = randomCharacter(LOWERCASE);
+        password[2] = randomCharacter(DIGITS);
+        password[3] = randomCharacter(SYMBOLS);
+        for (int i = 4; i < password.length; i++) {
+            password[i] = randomCharacter(TEMPORARY_PASSWORD_ALPHABET);
+        }
+        for (int i = password.length - 1; i > 0; i--) {
+            int swapIndex = secureRandom.nextInt(i + 1);
+            char current = password[i];
+            password[i] = password[swapIndex];
+            password[swapIndex] = current;
+        }
+        return new String(password);
+    }
+
+    /**
+     * 新建账号、主动改密使用的密码策略。旧摘要登录迁移不走此校验，避免锁死历史账号。
+     */
+    public boolean isAcceptableNewPassword(String rawPassword) {
+        return rawPassword != null
+                && rawPassword.length() >= MIN_NEW_PASSWORD_LENGTH
+                && rawPassword.length() <= MAX_NEW_PASSWORD_LENGTH;
     }
 
     public boolean matches(String rawPassword, String encodedPassword, String legacySalt) {
@@ -100,6 +139,10 @@ public class PasswordService {
         } finally {
             spec.clearPassword();
         }
+    }
+
+    private char randomCharacter(char[] alphabet) {
+        return alphabet[secureRandom.nextInt(alphabet.length)];
     }
 
     private String legacyHash(String rawPassword, String legacySalt) {

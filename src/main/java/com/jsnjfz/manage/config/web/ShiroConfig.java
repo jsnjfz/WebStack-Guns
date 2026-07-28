@@ -16,6 +16,7 @@
 package com.jsnjfz.manage.config.web;
 
 import com.jsnjfz.manage.config.properties.GunsProperties;
+import com.jsnjfz.manage.core.common.constant.Const;
 import com.jsnjfz.manage.core.interceptor.GunsUserFilter;
 import com.jsnjfz.manage.core.security.PasswordService;
 import com.jsnjfz.manage.core.shiro.ShiroDbRealm;
@@ -157,6 +158,13 @@ public class ShiroConfig {
         Map<String, String> hashMap = new LinkedHashMap<>();
         hashMap.put("/static/**", "anon");
         hashMap.put("/kaptcha/**", "anon");
+        hashMap.put("/druid/**", "roles[" + Const.ADMIN_NAME + "]");
+        hashMap.put("/swagger-ui.html", "roles[" + Const.ADMIN_NAME + "]");
+        hashMap.put("/swagger-ui/**", "roles[" + Const.ADMIN_NAME + "]");
+        hashMap.put("/swagger-resources/**", "roles[" + Const.ADMIN_NAME + "]");
+        hashMap.put("/v2/api-docs", "roles[" + Const.ADMIN_NAME + "]");
+        hashMap.put("/v3/api-docs/**", "roles[" + Const.ADMIN_NAME + "]");
+        hashMap.put("/webjars/**", "roles[" + Const.ADMIN_NAME + "]");
         hashMap.put("/gunsApi/**", "anon");
         hashMap.put("/login", "anon");
         hashMap.put("/global/sessionError", "anon");

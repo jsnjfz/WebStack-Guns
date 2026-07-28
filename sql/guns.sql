@@ -67,23 +67,6 @@ INSERT INTO `category` VALUES (28, 24, 28, '设计电台', 'fa-star-o', 2, '2019
 INSERT INTO `category` VALUES (35, 0, 0, '媒体导航', 'fa-anchor', 1, '2019-07-26 16:08:10', '2019-07-26 17:02:12');
 
 -- ----------------------------
--- Table structure for code_dbinfo
--- ----------------------------
-DROP TABLE IF EXISTS `code_dbinfo`;
-CREATE TABLE `code_dbinfo`  (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '别名',
-  `db_driver` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '数据库驱动',
-  `db_url` varchar(200) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '数据库地址',
-  `db_user_name` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '数据库账户',
-  `db_password` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '连接密码',
-  `db_type` varchar(10) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '数据库类型',
-  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
-  `update_time` datetime(0) NULL DEFAULT NULL COMMENT '修改时间',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '数据库链接信息' ROW_FORMAT = Compact;
-
--- ----------------------------
 -- Table structure for site
 -- ----------------------------
 DROP TABLE IF EXISTS `site`;
@@ -455,7 +438,6 @@ INSERT INTO `sys_menu` VALUES (142, 'notice_add', 'notice', '[0],[system],[notic
 INSERT INTO `sys_menu` VALUES (143, 'notice_update', 'notice', '[0],[system],[notice],', '修改通知', NULL, '/notice/update', 2, 3, 0, NULL, 1, NULL);
 INSERT INTO `sys_menu` VALUES (144, 'notice_delete', 'notice', '[0],[system],[notice],', '删除通知', NULL, '/notice/delete', 3, 3, 0, NULL, 1, NULL);
 INSERT INTO `sys_menu` VALUES (145, 'hello', '0', '[0],', '通知', 'fa-rocket', '/notice/hello', 3, 1, 1, NULL, 1, NULL);
-INSERT INTO `sys_menu` VALUES (148, 'code', '0', '[0],', '代码生成', 'fa-code', '/code', 7, 1, 1, NULL, 1, NULL);
 INSERT INTO `sys_menu` VALUES (149, 'api_mgr', '0', '[0],', '接口文档', 'fa-leaf', '/swagger-ui.html', 6, 1, 0, NULL, 1, NULL);
 INSERT INTO `sys_menu` VALUES (150, 'to_menu_edit', 'menu', '[0],[system],[menu],', '菜单编辑跳转', '', '/menu/menu_edit', 4, 3, 0, NULL, 1, NULL);
 INSERT INTO `sys_menu` VALUES (151, 'menu_list', 'menu', '[0],[system],[menu],', '菜单列表', '', '/menu/list', 5, 3, 0, NULL, 1, NULL);
@@ -603,7 +585,6 @@ INSERT INTO `sys_relation` VALUES (3897, 142, 1);
 INSERT INTO `sys_relation` VALUES (3898, 143, 1);
 INSERT INTO `sys_relation` VALUES (3899, 144, 1);
 INSERT INTO `sys_relation` VALUES (3900, 145, 1);
-INSERT INTO `sys_relation` VALUES (3901, 148, 1);
 INSERT INTO `sys_relation` VALUES (3902, 149, 1);
 INSERT INTO `sys_relation` VALUES (3903, 171, 1);
 INSERT INTO `sys_relation` VALUES (3904, 173, 1);
@@ -655,9 +636,6 @@ CREATE TABLE `sys_user`  (
 -- ----------------------------
 -- Records of sys_user
 -- ----------------------------
-INSERT INTO `sys_user` VALUES (1, '54660837-c66b-4293-a916-fbb8ca02407a.jpg', 'admin', 'ecfadcde9305f8891bcfe5a1e28c253e', '8pgby', '管理员', '2017-05-05 00:00:00', 1, 'jsnjfz@gmail.com', '18200000000', '1', 27, 1, '2016-01-29 08:49:53', 25);
-INSERT INTO `sys_user` VALUES (44, NULL, 'test', '45abb7879f6a8268f1ef600e6038ac73', 'ssts3', 'test', '2017-05-01 00:00:00', 1, 'abc@123.com', '', '5', 26, 3, '2017-05-16 20:33:37', NULL);
-INSERT INTO `sys_user` VALUES (45, NULL, 'boss', '71887a5ad666a18f709e1d4e693d5a35', '1f7bf', '老板', '2017-12-04 00:00:00', 1, '', '', '1', 24, 1, '2017-12-04 22:24:02', NULL);
-INSERT INTO `sys_user` VALUES (46, NULL, 'manager', 'b53cac62e7175637d4beb3b16b2f7915', 'j3cs9', '经理', '2017-12-04 00:00:00', 1, '', '', '1', 24, 1, '2017-12-04 22:24:24', NULL);
+INSERT INTO `sys_user` VALUES (1, NULL, 'admin', '!BOOTSTRAP_REQUIRED!', '', '管理员', '2017-05-05 00:00:00', 1, '', '', '1', 27, 1, '2016-01-29 08:49:53', 25);
 
 SET FOREIGN_KEY_CHECKS = 1;

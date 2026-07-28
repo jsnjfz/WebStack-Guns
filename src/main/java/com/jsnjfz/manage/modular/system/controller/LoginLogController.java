@@ -68,7 +68,8 @@ public class LoginLogController extends BaseController {
     @Permission(Const.ADMIN_NAME)
     @ResponseBody
     public Object list(@RequestParam(required = false) String beginTime, @RequestParam(required = false) String endTime, @RequestParam(required = false) String logName) {
-        Page<LoginLog> page = new PageFactory<LoginLog>().defaultPage();
+        Page<LoginLog> page = new PageFactory<LoginLog>().defaultPage(
+                "logname", "createtime", "message", "ip");
         List<Map<String, Object>> result = loginLogService.getLoginLogs(page, beginTime, endTime, logName, page.getOrderByField(), page.isAsc());
         page.setRecords(new LogWarpper(result).wrap());
         return new PageInfoBT<>(page);

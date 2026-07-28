@@ -24,10 +24,12 @@ import com.jsnjfz.manage.core.common.constant.factory.ConstantFactory;
 import com.jsnjfz.manage.core.common.constant.state.ManagerStatus;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
 import com.jsnjfz.manage.core.common.exception.InvalidUploadException;
+import com.jsnjfz.manage.core.common.exception.UploadRateLimitException;
 import com.jsnjfz.manage.core.log.LogObjectHolder;
 import com.jsnjfz.manage.core.shiro.ShiroKit;
 import com.jsnjfz.manage.core.shiro.ShiroUser;
 import com.jsnjfz.manage.core.security.PasswordService;
+import com.jsnjfz.manage.core.security.UploadRateLimitService;
 import com.jsnjfz.manage.modular.system.factory.UserFactory;
 import com.jsnjfz.manage.modular.system.model.User;
 import com.jsnjfz.manage.modular.system.service.IUserService;
@@ -47,14 +49,22 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.naming.NoPermissionException;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FilterOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -79,6 +89,9 @@ public class UserMgrController extends BaseController {
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private UploadRateLimitService uploadRateLimitService;
 
     private static String PREFIX = "/system/user/";
 
@@ -172,6 +185,9 @@ public class UserMgrController extends BaseController {
         if (!newPwd.equals(rePwd)) {
             throw new ServiceException(BizExceptionEnum.TWO_PWD_NOT_MATCH);
         }
+        if (!passwordService.isAcceptableNewPassword(newPwd)) {
+            throw new ServiceException(BizExceptionEnum.PASSWORD_TOO_WEAK);
+        }
         Integer userId = ShiroKit.getUser().getId();
         User user = userService.selectById(userId);
         if (passwordService.matches(oldPwd, user.getPassword(), user.getSalt())) {
@@ -212,6 +228,9 @@ public class UserMgrController extends BaseController {
         if (result.hasErrors()) {
             throw new ServiceException(BizExceptionEnum.REQUEST_NULL);
         }
+        if (!passwordService.isAcceptableNewPassword(user.getPassword())) {
+            throw new ServiceException(BizExceptionEnum.PASSWORD_TOO_WEAK);
+        }
 
         // 判断账号是否重复
         User theUser = userService.getByAccount(user.getAccount());
@@ -251,7 +270,7 @@ public class UserMgrController extends BaseController {
             assertAuth(user.getId());
             ShiroUser shiroUser = ShiroKit.getUser();
             if (shiroUser.getId().equals(user.getId())) {
-                this.userService.updateById(UserFactory.editUser(user, oldUser));
+                this.userService.updateById(UserFactory.editOwnProfile(user, oldUser));
                 return SUCCESS_TIP;
             } else {
                 throw new ServiceException(BizExceptionEnum.NO_PERMITION);
@@ -305,10 +324,11 @@ public class UserMgrController extends BaseController {
         }
         assertAuth(userId);
         User user = this.userService.selectById(userId);
+        String temporaryPassword = passwordService.generateTemporaryPassword();
         user.setSalt("");
-        user.setPassword(passwordService.encode(Const.DEFAULT_PWD));
+        user.setPassword(passwordService.encode(temporaryPassword));
         this.userService.updateById(user);
-        return SUCCESS_TIP;
+        return ResponseData.success(Map.of("temporaryPassword", temporaryPassword));
     }
 
     /**
@@ -372,7 +392,13 @@ public class UserMgrController extends BaseController {
      */
     @RequestMapping(method = RequestMethod.POST, path = "/upload")
     @ResponseBody
-    public String upload(@RequestPart("file") MultipartFile picture) {
+    public String upload(@RequestPart("file") MultipartFile picture,
+                         HttpServletRequest request) {
+        ShiroUser currentUser = ShiroKit.getUser();
+        if (currentUser == null
+                || !uploadRateLimitService.tryAcquire(currentUser.getId(), request.getRemoteAddr())) {
+            throw new UploadRateLimitException();
+        }
         String originalFilename = picture.getOriginalFilename();
         String suffix = originalFilename == null
                 ? "" : ToolUtil.getFileSuffix(originalFilename).toLowerCase(Locale.ROOT);
@@ -381,26 +407,98 @@ public class UserMgrController extends BaseController {
         }
         String outputFormat = "jpeg".equals(suffix) ? "jpg" : suffix;
         String pictureName = UUID.randomUUID().toString() + "." + outputFormat;
+        Path target = null;
         try {
-            BufferedImage image = ImageIO.read(picture.getInputStream());
-            if (image == null || image.getWidth() <= 0 || image.getHeight() <= 0
-                    || (long) image.getWidth() * image.getHeight() > MAX_IMAGE_PIXELS) {
-                throw new IOException("Invalid image");
-            }
+            BufferedImage image = readValidatedImage(picture);
             Path uploadRoot = new File(gunsProperties.getFileUploadPath()).toPath()
                     .toAbsolutePath().normalize();
             Files.createDirectories(uploadRoot);
-            Path target = uploadRoot.resolve(pictureName).normalize();
+            target = uploadRoot.resolve(pictureName).normalize();
             if (!target.startsWith(uploadRoot)) {
                 throw new IOException("Invalid upload path");
             }
-            if (!ImageIO.write(image, outputFormat, target.toFile())) {
-                throw new IOException("Unsupported image format");
+            try (OutputStream fileOutput = Files.newOutputStream(
+                    target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+                 OutputStream limitedOutput = new LimitedOutputStream(fileOutput, MAX_IMAGE_BYTES)) {
+                if (!ImageIO.write(image, outputFormat, limitedOutput)) {
+                    throw new IOException("Unsupported image format");
+                }
             }
         } catch (IOException e) {
+            if (target != null) {
+                try {
+                    Files.deleteIfExists(target);
+                } catch (IOException cleanupError) {
+                    e.addSuppressed(cleanupError);
+                }
+            }
             throw new InvalidUploadException();
         }
         return pictureName;
+    }
+
+    /**
+     * 先从图片头读取尺寸，确认像素上限后才分配完整像素缓冲区。
+     */
+    private BufferedImage readValidatedImage(MultipartFile picture) throws IOException {
+        try (InputStream input = picture.getInputStream();
+             ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
+            if (imageInput == null) {
+                throw new IOException("Invalid image stream");
+            }
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInput);
+            if (!readers.hasNext()) {
+                throw new IOException("Unsupported image format");
+            }
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(imageInput, true, true);
+                validateImageDimensions(reader.getWidth(0), reader.getHeight(0));
+                BufferedImage image = reader.read(0);
+                if (image == null) {
+                    throw new IOException("Invalid image");
+                }
+                return image;
+            } finally {
+                reader.dispose();
+            }
+        }
+    }
+
+    static void validateImageDimensions(int width, int height) throws IOException {
+        if (width <= 0 || height <= 0 || (long) width * height > MAX_IMAGE_PIXELS) {
+            throw new IOException("Invalid image dimensions");
+        }
+    }
+
+    static final class LimitedOutputStream extends FilterOutputStream {
+
+        private long remaining;
+
+        LimitedOutputStream(OutputStream output, long maximumBytes) {
+            super(output);
+            this.remaining = maximumBytes;
+        }
+
+        @Override
+        public void write(int value) throws IOException {
+            ensureCapacity(1);
+            out.write(value);
+            remaining--;
+        }
+
+        @Override
+        public void write(byte[] bytes, int offset, int length) throws IOException {
+            ensureCapacity(length);
+            out.write(bytes, offset, length);
+            remaining -= length;
+        }
+
+        private void ensureCapacity(int requestedBytes) throws IOException {
+            if (requestedBytes < 0 || requestedBytes > remaining) {
+                throw new IOException("Encoded image exceeds size limit");
+            }
+        }
     }
 
     /**

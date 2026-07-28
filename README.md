@@ -38,20 +38,31 @@ AI 导航的 96 个站点图标随项目保存在
 如果是从旧版数据库升级，只需执行一次：
 
 ```shell
+# 先完成并校验数据库备份，再执行升级脚本
 mysql -h127.0.0.1 -P3306 -u你的账号 -p guns < sql/security-upgrade.sql
 ```
 
-数据库密码不再写死在 `application.yml`，通过环境变量传入：
+数据库连接信息没有默认值，必须通过环境变量显式传入。首次使用初始化 SQL
+时还必须提供一个 12～128 位的新管理员密码；应用会在启动阶段替换历史默认摘要，
+缺失或仍使用历史默认值时会拒绝启动：
 
 ```shell
 export DB_URL='jdbc:mysql://127.0.0.1:3306/guns?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&useSSL=false&serverTimezone=Asia/Shanghai'
 export DB_USERNAME='你的账号'
 read -s DB_PASSWORD
 export DB_PASSWORD
+read -s GUNS_BOOTSTRAP_ADMIN_PASSWORD
+export GUNS_BOOTSTRAP_ADMIN_PASSWORD
+
+# 仅限本机 HTTP 开发环境；HTTPS 部署必须设为 true
+export GUNS_SECURE_COOKIE=false
 
 mvn clean verify
 java -jar target/Webstack-Guns-1.0.jar
 ```
+
+首次轮换成功后，后续启动不再需要
+`GUNS_BOOTSTRAP_ADMIN_PASSWORD`，应从部署环境中移除该变量。
 
 启动完成后访问：<http://127.0.0.1:8000>
 
@@ -66,7 +77,8 @@ export GUNS_JWT_SECRET="$(openssl rand -base64 64)"
 - `SERVER_ADDRESS`：默认 `127.0.0.1`；需要对外监听时显式设为 `0.0.0.0`
 - `SERVER_PORT`：默认 `8000`
 - `GUNS_FILE_UPLOAD_PATH`：默认使用系统临时目录下的独立上传目录
-- `GUNS_SECURE_COOKIE`：HTTPS 部署必须设为 `true`
+- `GUNS_SECURE_COOKIE`：必须显式设置；本机 HTTP 开发设为 `false`，HTTPS 部署设为 `true`
+- `BEETL_RESOURCE_AUTO_CHECK`：默认 `false`；仅本地模板开发需要时开启
 - `GUNS_SWAGGER_OPEN`、`GUNS_DRUID_MONITOR_OPEN`：默认关闭
 
 
@@ -75,9 +87,7 @@ export GUNS_JWT_SECRET="$(openssl rand -base64 64)"
 
 后台地址：http://domain/admin
 
-默认用户：admin
-
-默认密码：111111
+初始化管理员账号：`admin`
 
 在线demo: http://139.196.175.187:8000
 

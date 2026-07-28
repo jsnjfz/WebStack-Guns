@@ -59,6 +59,7 @@ public enum BizExceptionEnum implements AbstractBaseExceptionEnum {
     ACCOUNT_FREEZED(401, "账号被冻结"),
     OLD_PWD_NOT_RIGHT(402, "原密码不正确"),
     TWO_PWD_NOT_MATCH(405, "两次输入密码不一致"),
+    PASSWORD_TOO_WEAK(400, "新密码长度必须为 12 到 128 位"),
 
     /**
      * 错误的请求

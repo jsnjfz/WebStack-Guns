@@ -15,6 +15,7 @@
  */
 package com.jsnjfz.manage.modular.system.controller;
 
+import com.jsnjfz.manage.core.security.RichTextSanitizer;
 import com.jsnjfz.manage.modular.system.service.INoticeService;
 import cn.stylefeng.roses.core.base.controller.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,12 +40,20 @@ public class BlackboardController extends BaseController {
     @Autowired
     private INoticeService noticeService;
 
+    @Autowired
+    private RichTextSanitizer richTextSanitizer;
+
     /**
      * 跳转到黑板
      */
     @RequestMapping("")
     public String blackboard(Model model) {
         List<Map<String, Object>> notices = noticeService.list(null);
+        for (Map<String, Object> notice : notices) {
+            Object content = notice.get("content");
+            notice.put("content", richTextSanitizer.sanitize(
+                    content == null ? "" : content.toString()));
+        }
 
         model.addAttribute("noticeList", notices);
         return "/blackboard.html";

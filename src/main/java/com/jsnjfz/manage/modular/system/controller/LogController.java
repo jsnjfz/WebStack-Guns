@@ -70,7 +70,8 @@ public class LogController extends BaseController {
     @Permission(Const.ADMIN_NAME)
     @ResponseBody
     public Object list(@RequestParam(required = false) String beginTime, @RequestParam(required = false) String endTime, @RequestParam(required = false) String logName, @RequestParam(required = false) Integer logType) {
-        Page<OperationLog> page = new PageFactory<OperationLog>().defaultPage();
+        Page<OperationLog> page = new PageFactory<OperationLog>().defaultPage(
+                "logtype", "logname", "classname", "method", "createtime", "message");
         List<Map<String, Object>> result = operationLogService.getOperationLogs(page, beginTime, endTime, logName, BizLogType.valueOf(logType), page.getOrderByField(), page.isAsc());
         page.setRecords(new LogWarpper(result).wrap());
         return new PageInfoBT<>(page);

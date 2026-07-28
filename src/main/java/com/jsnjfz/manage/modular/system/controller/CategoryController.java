@@ -4,6 +4,8 @@ import cn.stylefeng.roses.core.base.controller.BaseController;
 import cn.stylefeng.roses.core.base.warpper.BaseControllerWrapper;
 import cn.stylefeng.roses.core.util.ToolUtil;
 import cn.stylefeng.roses.kernel.model.exception.ServiceException;
+import com.jsnjfz.manage.core.common.annotion.Permission;
+import com.jsnjfz.manage.core.common.constant.Const;
 import com.jsnjfz.manage.core.common.exception.BizExceptionEnum;
 import com.jsnjfz.manage.core.common.node.ZTreeNode;
 import com.jsnjfz.manage.modular.system.model.Category;
@@ -99,6 +101,7 @@ public class CategoryController extends BaseController {
      * 新增分类
      */
     @RequestMapping(value = "/add")
+    @Permission(Const.ADMIN_NAME)
     @ResponseBody
     public Object add(Category category) {
         int level = category.getParentId() == 0 ? 0 : categoryService.get(category.getParentId()).getLevels();
@@ -112,6 +115,7 @@ public class CategoryController extends BaseController {
      * 修改分类
      */
     @RequestMapping(value = "/update")
+    @Permission(Const.ADMIN_NAME)
     @ResponseBody
     public Object update(Category category) {
         if (ToolUtil.isEmpty(category) || category.getId() == null) {
@@ -127,6 +131,7 @@ public class CategoryController extends BaseController {
      * 删除分类
      */
     @RequestMapping(value = "/delete")
+    @Permission(Const.ADMIN_NAME)
     @ResponseBody
     public Object delete(@RequestParam Integer id) {
         categoryService.delete(id);

@@ -14,9 +14,11 @@ guns:
   kaptcha-open: ${GUNS_KAPTCHA_OPEN:false}              #是否开启登录时验证码 (true/false)
   file-upload-path: ${GUNS_FILE_UPLOAD_PATH:}            #文件上传目录(不配置的话为java.io.tmpdir目录)
   spring-session-open: ${GUNS_SPRING_SESSION_OPEN:false} #是否开启spring session,如果是多机环境需要开启(true/false)
-  secure-cookie: ${GUNS_SECURE_COOKIE:false}             #HTTPS 部署必须设为 true
+  secure-cookie: ${GUNS_SECURE_COOKIE}                   #本地 HTTP 显式设 false；HTTPS 部署设 true
   druid-monitor-open: ${GUNS_DRUID_MONITOR_OPEN:false}
   jwt-secret: ${GUNS_JWT_SECRET:}
+  # 仅在数据库仍使用历史默认管理员密码时读取一次，完成轮换后应从环境中删除。
+  bootstrap-admin-password: ${GUNS_BOOTSTRAP_ADMIN_PASSWORD:}
   session-invalidate-time: 1800     #session失效时间(只在单机环境下生效，多机环境在SpringSessionConfig类中配置) 单位：秒
   session-validation-interval: 900  #多久检测一次失效的session(只在单机环境下生效) 单位：秒
 
@@ -26,7 +28,7 @@ app:
   asset-version: @maven.build.timestamp@
 
 beetl:
-  resource-auto-check: true       #热加载beetl模板，开发时候用
+  resource-auto-check: ${BEETL_RESOURCE_AUTO_CHECK:false} #生产默认关闭；本地开发需要时显式开启
 
 spring:
   main:
@@ -48,6 +50,15 @@ spring:
     multipart:
       max-request-size: 5MB
       max-file-size: 5MB
+  datasource:
+    # 数据库连接信息必须由部署环境显式提供，禁止回退到 root/空密码。
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    filters: wall,mergeStat
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
   web:
     resources:
       cache:
@@ -61,15 +72,3 @@ mybatis-plus:
 
 log:
   path: manage-logs
-
----
-
-spring:
-  config:
-    activate:
-      on-profile: local
-  datasource:
-    url: ${DB_URL:jdbc:mysql://127.0.0.1:3306/guns?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&useSSL=false&serverTimezone=Asia/Shanghai}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
-    filters: wall,mergeStat

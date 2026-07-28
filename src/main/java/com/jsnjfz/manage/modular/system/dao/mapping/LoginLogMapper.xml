@@ -12,20 +12,23 @@
 				and logname like CONCAT('%',#{logName},'%')
 			</if>
 		</where>
+		order by
 		<choose>
-			<when test="orderByField != null and orderByField !=''">
+			<when test="orderByField == 'logname'">logname</when>
+			<when test="orderByField == 'message'">message</when>
+			<when test="orderByField == 'ip'">ip</when>
+			<otherwise>
+				createtime
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="orderByField == 'logname' or orderByField == 'message' or orderByField == 'ip'">
 				<choose>
-					<when test="isAsc == true">
-						order by ${orderByField} ASC
-					</when>
-					<otherwise>
-						order by ${orderByField} DESC
-					</otherwise>
+					<when test="isAsc == true">ASC</when>
+					<otherwise>DESC</otherwise>
 				</choose>
 			</when>
-			<otherwise>
-				order by createtime DESC
-			</otherwise>
+			<otherwise>DESC</otherwise>
 		</choose>
 	</select>
 

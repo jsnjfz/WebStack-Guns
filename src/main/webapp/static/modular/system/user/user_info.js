@@ -30,6 +30,11 @@ var UserInfoDlg = {
                 notEmpty: {
                     message: '密码不能为空'
                 },
+                stringLength: {
+                    min: 12,
+                    max: 128,
+                    message: '密码长度必须为12到128位'
+                },
                 identical: {
                     field: 'rePassword',
                     message: '两次密码不一致'
@@ -253,6 +258,11 @@ UserInfoDlg.editSubmit = function () {
  * 修改密码
  */
 UserInfoDlg.chPwd = function () {
+    var newPassword = $("#newPwd").val();
+    if (!newPassword || newPassword.length < 12 || newPassword.length > 128) {
+        Feng.error("新密码长度必须为12到128位!");
+        return;
+    }
     var ajax = new $ax(Feng.ctxPath + "/mgr/changePwd", function (data) {
         Feng.success("修改成功!");
     }, function (data) {

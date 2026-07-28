@@ -1,5 +1,6 @@
 package com.jsnjfz.manage.modular.system.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.baomidou.mybatisplus.activerecord.Model;
 import com.baomidou.mybatisplus.annotations.TableId;
 import com.baomidou.mybatisplus.annotations.TableName;
@@ -108,6 +109,7 @@ public class User extends Model<User> {
         this.account = account;
     }
 
+    @JsonIgnore
     public String getPassword() {
         return password;
     }
@@ -116,6 +118,7 @@ public class User extends Model<User> {
         this.password = password;
     }
 
+    @JsonIgnore
     public String getSalt() {
         return salt;
     }

@@ -15,11 +15,9 @@
  */
 package com.jsnjfz.manage.core.common.constant.factory;
 
-import com.jsnjfz.manage.core.common.constant.state.Order;
-import com.jsnjfz.manage.core.common.constant.state.Order;
 import cn.stylefeng.roses.core.util.HttpContext;
-import cn.stylefeng.roses.core.util.ToolUtil;
 import com.baomidou.mybatisplus.plugins.Page;
+import com.jsnjfz.manage.core.common.constant.state.Order;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -31,24 +29,54 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class PageFactory<T> {
 
-    public Page<T> defaultPage() {
-        HttpServletRequest request = HttpContext.getRequest();
-        int limit = Integer.valueOf(request.getParameter("limit"));     //每页多少条数据
-        int offset = Integer.valueOf(request.getParameter("offset"));   //每页的偏移量(本页当前有多少条)
-        String sort = request.getParameter("sort");         //排序字段名称
-        String order = request.getParameter("order");       //asc或desc(升序或降序)
-        if (ToolUtil.isEmpty(sort)) {
-            Page<T> page = new Page<>((offset / limit + 1), limit);
+    static final int DEFAULT_LIMIT = 20;
+    static final int MAX_LIMIT = 200;
+    static final int MAX_OFFSET = 1_000_000;
+
+    /**
+     * 默认禁止客户端指定排序字段。确需排序的调用方必须显式传入白名单。
+     */
+    public Page<T> defaultPage(String... allowedSortFields) {
+        return createPage(HttpContext.getRequest(), allowedSortFields);
+    }
+
+    Page<T> createPage(HttpServletRequest request, String... allowedSortFields) {
+        int limit = parseBoundedInteger(request.getParameter("limit"), DEFAULT_LIMIT, 1, MAX_LIMIT);
+        int offset = parseBoundedInteger(request.getParameter("offset"), 0, 0, MAX_OFFSET);
+        String sort = request.getParameter("sort");
+
+        if (!isAllowedSortField(sort, allowedSortFields)) {
+            Page<T> page = new Page<>((offset / limit) + 1, limit);
             page.setOpenSort(false);
             return page;
-        } else {
-            Page<T> page = new Page<>((offset / limit + 1), limit, sort);
-            if (Order.ASC.getDes().equals(order)) {
-                page.setAsc(true);
-            } else {
-                page.setAsc(false);
+        }
+
+        Page<T> page = new Page<>((offset / limit) + 1, limit, sort);
+        page.setAsc(Order.ASC.getDes().equalsIgnoreCase(request.getParameter("order")));
+        return page;
+    }
+
+    private boolean isAllowedSortField(String sort, String... allowedSortFields) {
+        if (sort == null || sort.isEmpty() || allowedSortFields == null) {
+            return false;
+        }
+        for (String allowedSortField : allowedSortFields) {
+            if (sort.equals(allowedSortField)) {
+                return true;
             }
-            return page;
+        }
+        return false;
+    }
+
+    private int parseBoundedInteger(String value, int defaultValue, int minimum, int maximum) {
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            int parsed = Integer.parseInt(value);
+            return Math.max(minimum, Math.min(parsed, maximum));
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
         }
     }
 }

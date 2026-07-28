@@ -157,12 +157,20 @@ MgrUser.unfreeze = function () {
 MgrUser.resetPwd = function () {
     if (this.check()) {
         var userId = this.seItem.id;
-        parent.layer.confirm('是否重置密码为111111？', {
+        parent.layer.confirm('是否生成随机临时密码？', {
             btn: ['确定', '取消'],
             shade: false //不显示遮罩
         }, function () {
             var ajax = new $ax(Feng.ctxPath + "/mgr/reset", function (data) {
-                Feng.success("重置密码成功!");
+                var temporaryPassword = data && data.data ? data.data.temporaryPassword : "";
+                if (!temporaryPassword) {
+                    Feng.error("密码已重置，但未收到临时密码，请再次重置!");
+                    return;
+                }
+                parent.layer.alert(
+                    "临时密码：" + temporaryPassword + "<br>请安全传达，并要求用户登录后立即修改。",
+                    {title: "密码重置成功"}
+                );
             }, function (data) {
                 Feng.error("重置密码失败!");
             });

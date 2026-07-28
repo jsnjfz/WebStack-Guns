@@ -16,7 +16,6 @@
 package com.jsnjfz.manage.modular.system.factory;
 
 import com.jsnjfz.manage.modular.system.model.User;
-import com.jsnjfz.manage.modular.system.model.User;
 import com.jsnjfz.manage.modular.system.transfer.UserDto;
 import cn.stylefeng.roses.core.util.ToolUtil;
 import org.springframework.beans.BeanUtils;
@@ -40,6 +39,17 @@ public class UserFactory {
     }
 
     public static User editUser(UserDto newUser, User oldUser) {
+        return editUser(newUser, oldUser, true);
+    }
+
+    /**
+     * 普通用户编辑自己的资料时，不允许通过请求参数改变所属部门。
+     */
+    public static User editOwnProfile(UserDto newUser, User oldUser) {
+        return editUser(newUser, oldUser, false);
+    }
+
+    private static User editUser(UserDto newUser, User oldUser, boolean allowDepartmentChange) {
         if (newUser == null || oldUser == null) {
             return oldUser;
         } else {
@@ -52,7 +62,7 @@ public class UserFactory {
             if (ToolUtil.isNotEmpty(newUser.getBirthday())) {
                 oldUser.setBirthday(newUser.getBirthday());
             }
-            if (ToolUtil.isNotEmpty(newUser.getDeptid())) {
+            if (allowDepartmentChange && ToolUtil.isNotEmpty(newUser.getDeptid())) {
                 oldUser.setDeptid(newUser.getDeptid());
             }
             if (ToolUtil.isNotEmpty(newUser.getSex())) {

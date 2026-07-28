@@ -28,7 +28,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author stylefeng
  * @Date 2017/5/21 12:06
  */
-@SpringBootApplication(exclude = {WebAutoConfiguration.class, MybaitsPlusAutoConfiguration.class})
+@SpringBootApplication(
+        exclude = {WebAutoConfiguration.class, MybaitsPlusAutoConfiguration.class},
+        excludeName = {
+                "cn.stylefeng.roses.core.config.FastjsonAutoConfiguration",
+                "cn.stylefeng.roses.core.config.RedisAutoConfiguration",
+                "cn.stylefeng.roses.core.config.DbInitializerAutoConfiguration"
+        })
 public class WebstackGunsApplication {
 
     private final static Logger logger = LoggerFactory.getLogger(WebstackGunsApplication.class);
