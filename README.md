@@ -32,7 +32,7 @@ mysql -h127.0.0.1 -P3306 -u你的账号 -p guns < sql/guns.sql
 mysql -h127.0.0.1 -P3306 -u你的账号 -p guns < sql/ai-navigation.sql
 ```
 
-AI 导航的 96 个站点图标随项目保存在
+国内版 AI 导航按实际产品分布划分为 12 个栏目，96 个站点图标随项目保存在
 `src/main/webapp/static/tmp/ai-site-001.png` 至 `ai-site-096.png`，首页加载时不依赖外部图标服务。
 
 如果是从旧版数据库升级，只需执行一次：
